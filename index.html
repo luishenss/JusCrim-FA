@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>JusCrim-FA — Análise de Antecedentes</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #0f1117;
+      color: #e2e8f0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      background: #1a1d2e;
+      border-bottom: 1px solid #2d3148;
+      padding: 20px 32px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    header .logo {
+      width: 40px; height: 40px;
+      background: linear-gradient(135deg, #3b5bdb, #7048e8);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px;
+    }
+
+    header h1 { font-size: 1.25rem; font-weight: 700; color: #fff; }
+    header span { font-size: 0.8rem; color: #7c85a2; margin-left: 8px; }
+
+    .badge {
+      margin-left: auto;
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 20px;
+      padding: 4px 12px;
+      font-size: 0.72rem;
+      color: #94a3b8;
+    }
+
+    main {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0;
+    }
+
+    .panel {
+      padding: 32px;
+      border-right: 1px solid #1e2236;
+    }
+    .panel:last-child { border-right: none; }
+
+    .panel-title {
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #7c85a2;
+      margin-bottom: 20px;
+    }
+
+    /* ── PAINEL 1: Gerador ── */
+    label {
+      display: block;
+      font-size: 0.85rem;
+      color: #94a3b8;
+      margin-bottom: 6px;
+    }
+
+    input[type="date"] {
+      width: 100%;
+      padding: 10px 14px;
+      background: #1a1d2e;
+      border: 1px solid #2d3148;
+      border-radius: 8px;
+      color: #e2e8f0;
+      font-size: 0.95rem;
+      margin-bottom: 20px;
+      outline: none;
+      transition: border-color .2s;
+    }
+    input[type="date"]:focus { border-color: #3b5bdb; }
+    input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.6); }
+
+    .msg-box {
+      background: #1a1d2e;
+      border: 1px solid #2d3148;
+      border-radius: 10px;
+      padding: 16px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.88rem;
+      color: #a5f3fc;
+      line-height: 1.7;
+      white-space: pre-wrap;
+      min-height: 90px;
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 14px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      flex: 1;
+      padding: 10px 16px;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .2s;
+      display: flex; align-items: center; justify-content: center; gap: 7px;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #3b5bdb, #7048e8);
+      color: #fff;
+    }
+    .btn-primary:hover { opacity: 0.88; transform: translateY(-1px); }
+
+    .btn-secondary {
+      background: #1e2236;
+      border: 1px solid #2d3148;
+      color: #94a3b8;
+    }
+    .btn-secondary:hover { background: #252a40; color: #e2e8f0; }
+
+    .btn-success {
+      background: #064e3b;
+      border: 1px solid #065f46;
+      color: #6ee7b7;
+    }
+    .btn-success:hover { background: #065f46; }
+
+    .toast {
+      position: fixed;
+      bottom: 28px; right: 28px;
+      background: #064e3b;
+      border: 1px solid #065f46;
+      color: #6ee7b7;
+      padding: 12px 20px;
+      border-radius: 10px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: all .3s;
+      pointer-events: none;
+      z-index: 999;
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+
+    /* ── Divider card ── */
+    .info-card {
+      background: #1a1d2e;
+      border: 1px solid #2d3148;
+      border-radius: 10px;
+      padding: 14px 16px;
+      margin-top: 20px;
+      font-size: 0.82rem;
+      color: #7c85a2;
+      line-height: 1.6;
+    }
+    .info-card strong { color: #94a3b8; }
+
+    /* ── PAINEL 2: Prompt ── */
+    .prompt-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+
+    .version-pill {
+      background: #312e81;
+      border: 1px solid #4338ca;
+      color: #a5b4fc;
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 20px;
+    }
+
+    .prompt-area {
+      background: #1a1d2e;
+      border: 1px solid #2d3148;
+      border-radius: 10px;
+      padding: 16px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.78rem;
+      color: #cbd5e1;
+      line-height: 1.65;
+      height: calc(100vh - 260px);
+      overflow-y: auto;
+      white-space: pre-wrap;
+      resize: none;
+    }
+
+    .prompt-area::-webkit-scrollbar { width: 6px; }
+    .prompt-area::-webkit-scrollbar-track { background: #1a1d2e; }
+    .prompt-area::-webkit-scrollbar-thumb { background: #2d3148; border-radius: 3px; }
+
+    /* Syntax highlight simples */
+    .prompt-area .kw  { color: #7dd3fc; }
+    .prompt-area .val { color: #a5f3fc; }
+    .prompt-area .hd  { color: #f0abfc; font-weight: bold; }
+
+    footer {
+      background: #1a1d2e;
+      border-top: 1px solid #2d3148;
+      padding: 12px 32px;
+      font-size: 0.72rem;
+      color: #475569;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    footer a { color: #7c85a2; text-decoration: none; }
+    footer a:hover { color: #e2e8f0; }
+
+    @media (max-width: 800px) {
+      main { grid-template-columns: 1fr; }
+      .panel { border-right: none; border-bottom: 1px solid #1e2236; }
+      .prompt-area { height: 400px; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">⚖️</div>
+  <div>
+    <h1>JusCrim-FA <span>Análise de Antecedentes Criminais</span></h1>
+  </div>
+  <div class="badge">TJSP · Uso Judicial</div>
+</header>
+
+<main>
+
+  <!-- PAINEL 1: Gerador de mensagem -->
+  <div class="panel">
+    <div class="panel-title">📋 Gerador de Análise</div>
+
+    <label for="dataCrime">Data do fato do crime atual</label>
+    <input type="date" id="dataCrime" />
+
+    <label>Mensagem para enviar ao modelo</label>
+    <div class="msg-box" id="msgPreview">Preencha a data acima para gerar a mensagem.</div>
+
+    <div class="actions">
+      <button class="btn btn-primary" onclick="copiarMensagem()">
+        📋 Copiar mensagem
+      </button>
+      <button class="btn btn-secondary" onclick="abrirClaude()">
+        🔗 Abrir Claude
+      </button>
+    </div>
+
+    <div class="info-card">
+      <strong>Como usar:</strong><br>
+      1. Informe a data do crime atual acima<br>
+      2. Copie o prompt do painel direito → cole no <em>system prompt</em> do modelo<br>
+      3. Copie a mensagem gerada → cole na conversa junto com o PDF da certidão<br>
+      4. Envie e aguarde a análise completa
+    </div>
+
+    <div class="info-card" style="margin-top:12px; border-color:#7f1d1d; background:#1c0a0a;">
+      <strong style="color:#fca5a5;">⚠️ Aviso legal:</strong>
+      <span style="color:#f87171;"> Ferramenta de apoio judicial. Não substitui o juízo do magistrado.
+      Verifique os resultados antes de utilizar em processos. Dados sensíveis — observe a LGPD.</span>
+    </div>
+  </div>
+
+  <!-- PAINEL 2: Prompt -->
+  <div class="panel">
+    <div class="panel-title">
+      <div class="prompt-header">
+        <span>⚙️ System Prompt</span>
+        <span class="version-pill">v3.4</span>
+      </div>
+    </div>
+
+    <div class="actions" style="margin-bottom:14px;">
+      <button class="btn btn-success" onclick="copiarPrompt()">
+        📋 Copiar prompt completo
+      </button>
+    </div>
+
+    <div class="prompt-area" id="promptArea">Carregando prompt...</div>
+  </div>
+
+</main>
+
+<footer>
+  <span>JusCrim-FA · CC BY-NC 4.0 · <a href="https://github.com/luishenss/JusCrim-FA" target="_blank">github.com/luishenss/JusCrim-FA</a></span>
+  <span>Apenas certidões TJSP · Máx. 15 páginas</span>
+</footer>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  // ── Prompt completo embutido ──────────────────────────────────────────────
+  const PROMPT = `ANÁLISE DE CERTIDÃO DE ANTECEDENTES CRIMINAIS
+Função: Identificar maus antecedentes e reincidência criminal
+Versão: 3.4
+Uso: Fins exclusivamente judiciais
+
+PERSONA: Você é um juiz criminal experiente com 15 anos de magistratura, especializado em direito penal e dosimetria da pena. Sua expertise inclui análise precisa de antecedentes criminais para aplicação correta dos institutos de maus antecedentes e reincidência conforme o Código Penal brasileiro.
+
+INPUTS NECESSÁRIOS:
+- Upload: Certidão de antecedentes (PDF/imagem)
+- Data do crime atual: dd/mm/aaaa
+
+LIMITAÇÕES:
+- Apenas certidões do TJSP
+- Documentos em português
+- Máximo 15 páginas por análise
+
+---
+
+REGRAS TEMPORAIS FUNDAMENTAIS:
+
+REINCIDÊNCIA (art. 63, CP):
+- Fato anterior ao crime atual
+- Trânsito em julgado ANTERIOR ao crime atual
+- Extinção há menos de 5 anos OU sem extinção
+
+MAUS ANTECEDENTES (art. 59, CP):
+- Fato anterior ao crime atual
+- Trânsito em julgado (ANTERIOR OU POSTERIOR ao crime atual)
+- Extinção há mais de 5 anos
+
+NENHUM DOS INSTITUTOS:
+- Fato posterior ao crime atual (independente do trânsito)
+
+---
+
+METODOLOGIA OBRIGATÓRIA - ORDEM RÍGIDA:
+
+ETAPA 1 - LEITURA COMPLETA ANTES DE QUALQUER ANÁLISE:
+- PROIBIDO: Analisar ou classificar qualquer processo antes de ler TODA a certidão
+- OBRIGATÓRIO: Primeiro leia todas as páginas, depois inicie a análise
+- CHECKPOINT: Confirme que leu todas as páginas antes de prosseguir
+- Leia LINHA POR LINHA de todas as páginas antes de extrair qualquer informação
+- Mapeie TODOS os processos mencionados no documento
+- CRUCIAL: Identifique pares de processos relacionados:
+  - Processo de Execução: Aparece como "Execução de Pena: [número] ([número original])"
+  - Processo Original: O número entre parênteses é o processo da fase de conhecimento
+  - Analise SEMPRE em conjunto - dados podem estar distribuídos entre ambos
+
+ETAPA 2 - IDENTIFICAÇÃO DE CONDENAÇÕES VÁLIDAS:
+- Procure por processos que contenham:
+  - "Sentença Condenatória" OU "Acórdão Condenatório" OU "Acordão - Sentença"
+  - E "Trânsito em julgado para a Defesa" (com possíveis variações)
+
+REGRA CRÍTICA: A data do trânsito em julgado NÃO exclui a condenação da análise - apenas define se será reincidência, maus antecedentes ou nenhum dos institutos.
+
+ANALISE EXTINÇÕES COM CUIDADO:
+- INCLUA: "Extinção da Punibilidade" que ocorreu APÓS sentença condenatória
+- EXCLUA: "Extinção da Punibilidade" que ocorreu ANTES de qualquer condenação
+
+IGNORE COMPLETAMENTE:
+- Processos apenas com "Inquérito Policial"
+- "Sentença Absolutória"
+- "Sentença de Impronúncia"
+- "Termo Circunstanciado" sem condenação
+- Processos sem trânsito em julgado para a defesa
+
+ETAPA 3 - VERIFICAÇÃO DUPLA ANTES DA CLASSIFICAÇÃO:
+Antes de classificar qualquer condenação, responda:
+1. "Há sentença condenatória?" (Sim/Não)
+2. "Há trânsito em julgado para a defesa?" (Sim/Não + Data)
+3. "Qual a relação temporal com o crime atual?" (Anterior/Posterior)
+
+Se qualquer resposta for "Não" ou "Não encontrado" → EXCLUIR
+Se todas forem "Sim" → INCLUIR e classificar conforme data
+
+ETAPA 4 - BUSCA SISTEMÁTICA POR TRÂNSITO EM JULGADO:
+- Procure por variações: "Trânsito em julgado para a Defesa", "Trânsito em Julgado para a Defesa"
+- A data pode estar no processo original OU na execução
+- Se não encontrar no original, verifique na seção de execução
+
+---
+
+DADOS A EXTRAIR:
+Para cada condenação válida (analisando processo original + execução em conjunto):
+1. Vara criminal: [onde tramitou] (página X)
+2. Números dos processos: [Original: XXXX] [Execução: YYYY] (página X)
+3. Crime anterior: [transcreva EXATAMENTE como consta] (página X)
+4. Data do fato do crime anterior: [dd/mm/aaaa] (página X)
+5. Data do trânsito em julgado PARA A DEFESA: [dd/mm/aaaa] (página X)
+6. Data da extinção da punibilidade: [dd/mm/aaaa OU "Não consta"] (página X)
+7. Data do fato do crime atual: [conforme informado pelo usuário]
+
+REGRAS DE EXTRAÇÃO:
+- Analise processo original + execução como UM CASO
+- Se não encontrar "Trânsito em julgado para a Defesa": NÃO inclua
+- Para extinções: Verifique se houve condenação anterior válida - se sim, INCLUA
+- Sempre cite ambos os números de processo para rastreabilidade
+- Cite a página onde encontrou cada informação
+
+---
+
+CHECKPOINT TEMPORAL OBRIGATÓRIO:
+Para cada condenação válida, responda:
+1. "Data do fato é anterior ao crime atual?" (Sim/Não)
+2. "Data do trânsito é anterior ao crime atual?" (Sim/Não)
+3. "Há extinção da punibilidade?" (Sim/Não + quando)
+
+DECISÃO:
+- Se Fato > Crime atual → NENHUM DOS INSTITUTOS
+- Se Fato < Crime atual E Trânsito < Crime atual → Avaliar REINCIDÊNCIA
+- Se Fato < Crime atual E Trânsito > Crime atual → Avaliar MAUS ANTECEDENTES
+
+---
+
+CLASSIFICAÇÃO JURÍDICA:
+SEMPRE CALCULE:
+1. Crime atual: [data informada]
+2. Fato do crime anterior: [data encontrada]
+3. Trânsito em julgado: [data encontrada]
+4. Extinção da pena: [data encontrada ou "não consta"]
+
+FÓRMULAS OBRIGATÓRIAS:
+- REINCIDÊNCIA = (Fato < Crime atual) E (Trânsito < Crime atual) E (Extinção = "não consta" OU < 5 anos)
+- MAUS ANTECEDENTES = (Fato < Crime atual) E (Trânsito anterior OU posterior) E (Extinção > 5 anos OU sem extinção, sem reincidência)
+- NENHUM DOS INSTITUTOS = (Fato > Crime atual)
+
+ATENÇÃO: Mesmo com extinção por indulto, se houve condenação válida anterior, INCLUA na análise.
+
+CÁLCULOS:
+- Mostre: "Entre [data inicial] e [data final] transcorreram X anos e Y meses"
+- Aplique art. 10 do CP (dia inicial incluído no cômputo)
+
+---
+
+FORMATO DE SAÍDA OBRIGATÓRIO:
+
+### RESUMO EXECUTIVO:
+[3 linhas sobre o resultado da análise]
+
+### TABELA RESUMO DOS RESULTADOS:
+| Nº | Processo Original | Crime | Data do Fato | Trânsito p/ Defesa | Classificação |
+|----|-------------------|-------|--------------|-------------------|---------------|
+| 1  | [número]          | [crime] | [dd/mm/aaaa] | [dd/mm/aaaa]  | [Reincidência/Maus Antecedentes/Nenhum] |
+
+### CONDENAÇÕES VÁLIDAS IDENTIFICADAS:
+[ORDENE POR ORDEM DE APARIÇÃO NA CERTIDÃO]
+[N]ª CONDENAÇÃO: [todas as informações extraídas]
+
+### PROCESSOS EXCLUÍDOS DA ANÁLISE:
+PROCESSO EXCLUÍDO [N]:
+- Número do processo: [número] (página X)
+- Tipo de decisão: [tipo]
+- Motivo da exclusão: [explicação específica]
+- Data: [se disponível]
+
+### CLASSIFICAÇÃO FINAL:
+- Total de condenações válidas: [X]
+- Reincidência: [X] condenação(ões)
+- Maus antecedentes: [X] condenação(ões)
+- Nenhum dos institutos: [X] condenação(ões)
+
+### RECOMENDAÇÕES:
+[Orientações específicas para o caso]
+
+---
+
+AUTO-VERIFICAÇÃO OBRIGATÓRIA — confirme antes de entregar:
+[ ] Li TODAS as páginas antes de iniciar qualquer análise
+[ ] Analisei processos originais + execuções em conjunto
+[ ] Encontrei variações de "Trânsito em julgado para a Defesa"
+[ ] Para cada INCLUÍDO: confirmei sentença condenatória + trânsito em julgado
+[ ] Para cada EXCLUÍDO: expliquei especificamente o motivo
+[ ] Apliquei o CHECKPOINT TEMPORAL para cada condenação
+[ ] Calculei corretamente todas as datas usando art. 10 do CP
+[ ] Verifiquei se extinções ocorreram APÓS condenações válidas
+[ ] Citei ambos os números de processo quando aplicável
+[ ] Listei TODOS os processos (incluídos + excluídos)
+[ ] Ordenei condenações por ordem de aparição na certidão
+[ ] Combinei informações distribuídas entre seções relacionadas
+[ ] Criei a tabela resumo com todos os resultados
+
+Se encontrar inconsistências ou não conseguir conectar informações entre processo original e execução, PARE e solicite esclarecimento.`;
+
+  // ── Renderiza prompt ──────────────────────────────────────────────────────
+  document.getElementById('promptArea').textContent = PROMPT;
+
+  // ── Gera mensagem conforme data ───────────────────────────────────────────
+  function formatarData(iso) {
+    if (!iso) return null;
+    const [y, m, d] = iso.split('-');
+    return `${d}/${m}/${y}`;
+  }
+
+  function atualizarMensagem() {
+    const val = document.getElementById('dataCrime').value;
+    const preview = document.getElementById('msgPreview');
+    if (!val) {
+      preview.textContent = 'Preencha a data acima para gerar a mensagem.';
+      return;
+    }
+    const data = formatarData(val);
+    preview.textContent =
+`Data do fato do crime atual: ${data}
+
+[Anexe aqui o PDF da certidão de antecedentes do TJSP]`;
+  }
+
+  document.getElementById('dataCrime').addEventListener('input', atualizarMensagem);
+
+  // ── Copiar mensagem ───────────────────────────────────────────────────────
+  function copiarMensagem() {
+    const val = document.getElementById('dataCrime').value;
+    if (!val) { showToast('⚠️ Informe a data primeiro'); return; }
+    const data = formatarData(val);
+    const texto = `Data do fato do crime atual: ${data}\n\n[Anexe aqui o PDF da certidão de antecedentes do TJSP]`;
+    navigator.clipboard.writeText(texto).then(() => showToast('✅ Mensagem copiada!'));
+  }
+
+  // ── Copiar prompt ─────────────────────────────────────────────────────────
+  function copiarPrompt() {
+    navigator.clipboard.writeText(PROMPT).then(() => showToast('✅ Prompt copiado!'));
+  }
+
+  // ── Abrir Claude ──────────────────────────────────────────────────────────
+  function abrirClaude() {
+    window.open('https://claude.ai', '_blank');
+  }
+
+  // ── Toast ─────────────────────────────────────────────────────────────────
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2500);
+  }
+</script>
+</body>
+</html>
