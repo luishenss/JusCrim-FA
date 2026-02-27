@@ -102,6 +102,12 @@
       color: var(--red);
     }
 
+    .user-pill {
+      background: var(--surface-2);
+      color: var(--text-2);
+      border: 1px solid var(--border);
+    }
+
     .icon-btn {
       width: 36px; height: 36px;
       border: 1px solid var(--border);
@@ -507,6 +513,8 @@
     <span class="pill">v3.4</span>
     <span class="pill pill-red">Uso Judicial</span>
     <span class="lock-badge locked" id="lockBadge" title="Estado da sessão">🔒 Bloqueado</span>
+    <span class="pill user-pill hidden" id="userBadge" title="Usuário autenticado">👤 <span id="userLabel"></span></span>
+    <button class="icon-btn hidden" id="btnLogout" title="Sair da conta">🚪</button>
     <button class="icon-btn" id="btnSettings" title="Configurações">⚙️</button>
   </div>
 </header>
@@ -582,8 +590,31 @@
   <span>Apenas certidões TJSP · Uso exclusivamente judicial</span>
 </footer>
 
+<!-- ══ MODAL: LOGIN ══════════════════════════════════════════ -->
+<div class="overlay" id="modalLogin">
+  <div class="modal">
+    <div class="modal-icon">🔑</div>
+    <h2>Acesso ao sistema</h2>
+    <p class="desc">Insira suas credenciais para acessar o <strong>JusCrim-FA</strong>.<br>Sistema restrito a uso exclusivamente judicial.</p>
+    <label style="font-size:.78rem;font-weight:600;color:var(--text-2);display:block;margin-bottom:6px;">Usuário</label>
+    <div class="input-wrap">
+      <input type="text" id="loginUser" placeholder="nome de usuário" autocomplete="username"
+             style="font-family:inherit;" />
+    </div>
+    <label style="font-size:.78rem;font-weight:600;color:var(--text-2);display:block;margin-bottom:6px;">Senha</label>
+    <div class="input-wrap" style="margin-bottom:0">
+      <input type="password" id="loginPass" placeholder="senha" autocomplete="current-password" />
+      <button class="toggle-pw" data-target="loginPass">👁</button>
+    </div>
+    <div id="loginError" style="font-size:.78rem;color:var(--red);margin-top:8px;margin-bottom:4px;display:none;">Usuário ou senha incorretos. Tente novamente.</div>
+    <div class="modal-footer" style="margin-top:18px;">
+      <button class="btn-sm pri" id="btnLogin">Entrar →</button>
+    </div>
+  </div>
+</div>
+
 <!-- ══ MODAL: CONFIGURAÇÃO INICIAL ══════════════════════════ -->
-<div class="overlay" id="modalSetup">
+<div class="overlay hidden" id="modalSetup">
   <div class="modal">
     <div class="modal-icon">🔐</div>
     <h2>Configuração inicial</h2>
@@ -854,10 +885,31 @@ AUTO-VERIFICAÇÃO OBRIGATÓRIA — confirme antes de entregar:
 
 Se encontrar inconsistências ou não conseguir conectar informações entre processo original e execução, PARE e solicite esclarecimento.`;
 
+/* ══════════════════════════════════════════════════════════
+   CONFIGURAÇÃO DE USUÁRIOS
+   ──────────────────────────────────────────────────────────
+   Para adicionar ou alterar usuários, edite a lista abaixo.
+   O campo "h" é o hash SHA-256 da senha.
+
+   Como gerar o hash de uma nova senha:
+   1. Abra o console do navegador (F12 → Console)
+   2. Cole o comando abaixo substituindo SUASENHA:
+      crypto.subtle.digest('SHA-256', new TextEncoder().encode('SUASENHA'))
+        .then(b => console.log([...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')))
+   3. Copie o resultado e cole no campo "h" abaixo.
+
+   Credenciais iniciais: admin / admin
+   ══════════════════════════════════════════════════════════ */
+const USERS = [
+  { u: 'admin', h: '8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918' }, // senha: admin
+  // { u: 'juiz1', h: 'HASH_SHA256_AQUI' }, // adicione mais usuários aqui
+];
+
 /* ── Estado ─────────────────────────────────────────────── */
 let currentFile  = null;
 let rawResult    = '';
 let sessionKey   = null;   // chave API em memória (nunca gravada em disco)
+let loggedUser   = null;   // usuário autenticado (só memória)
 
 /* ── Crypto (Web Crypto API) ─────────────────────────────── */
 const STORAGE_KEY = 'juscrim_enc';
@@ -908,21 +960,85 @@ async function decryptApiKey(stored, pin) {
   }
 }
 
+/* ── SHA-256 (para autenticação de usuários) ─────────────── */
+async function sha256(str) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+/* ── Login de usuário ────────────────────────────────────── */
+async function doLogin() {
+  const u = document.getElementById('loginUser').value.trim().toLowerCase();
+  const p = document.getElementById('loginPass').value;
+  const errEl = document.getElementById('loginError');
+  errEl.style.display = 'none';
+
+  if (!u || !p) { errEl.style.display = 'block'; return; }
+
+  const btn = document.getElementById('btnLogin');
+  btn.disabled = true; btn.textContent = 'Verificando...';
+
+  try {
+    const hash = await sha256(p);
+    const user = USERS.find(x => x.u === u && x.h === hash);
+
+    if (!user) {
+      errEl.style.display = 'block';
+      document.getElementById('loginPass').value = '';
+      document.getElementById('loginPass').focus();
+      btn.disabled = false; btn.textContent = 'Entrar →';
+      return;
+    }
+
+    // Login bem-sucedido
+    setLoggedUser(user.u);
+    document.getElementById('loginUser').value = '';
+    document.getElementById('loginPass').value = '';
+
+    // Fluxo da chave de API
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (!stored) {
+      show_modal('modalSetup');
+    } else {
+      show_modal('modalUnlock');
+    }
+  } catch (err) {
+    toast('❌ Erro: ' + err.message);
+  }
+  btn.disabled = false; btn.textContent = 'Entrar →';
+}
+
+function setLoggedUser(name) {
+  loggedUser = name;
+  document.getElementById('userLabel').textContent = name;
+  document.getElementById('userBadge').classList.remove('hidden');
+  document.getElementById('btnLogout').classList.remove('hidden');
+}
+
+function doLogout() {
+  if (!confirm('Deseja encerrar a sessão?')) return;
+  loggedUser = null;
+  sessionKey = null;
+  document.getElementById('userBadge').classList.add('hidden');
+  document.getElementById('btnLogout').classList.add('hidden');
+  const b = document.getElementById('lockBadge');
+  b.textContent = '🔒 Bloqueado';
+  b.className = 'lock-badge locked';
+  show_modal('modalLogin');
+  document.getElementById('loginError').style.display = 'none';
+}
+
 /* ── Init ───────────────────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', () => {
   setupDropzone();
   setupUI();
-
-  const stored = localStorage.getItem(STORAGE_KEY);
-  if (!stored) {
-    show_modal('modalSetup');
-  } else {
-    show_modal('modalUnlock');
-  }
+  // Sempre inicia pelo login de usuário
+  show_modal('modalLogin');
+  document.getElementById('loginUser').focus();
 });
 
 function show_modal(id) {
-  ['modalSetup','modalUnlock','modalSettings'].forEach(m =>
+  ['modalLogin','modalSetup','modalUnlock','modalSettings'].forEach(m =>
     document.getElementById(m).classList.toggle('hidden', m !== id));
 }
 
@@ -935,6 +1051,12 @@ function setSessionKey(key) {
 
 /* ── UI wiring ──────────────────────────────────────────── */
 function setupUI() {
+  // Login / logout
+  document.getElementById('btnLogin').addEventListener('click', doLogin);
+  document.getElementById('loginUser').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('loginPass').focus(); });
+  document.getElementById('loginPass').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+  document.getElementById('btnLogout').addEventListener('click', doLogout);
+
   document.getElementById('dataCrime').addEventListener('input', syncBtn);
   document.getElementById('btnAnalyze').addEventListener('click', runAnalysis);
   document.getElementById('btnNew').addEventListener('click', resetToForm);
