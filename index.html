@@ -116,6 +116,14 @@
     }
     .icon-btn:hover { background: var(--surface-2); color: var(--text); border-color: #c7d2e0; }
 
+    .lock-badge {
+      display: flex; align-items: center; gap: 5px;
+      font-size: 0.68rem; font-weight: 700; padding: 3px 9px;
+      border-radius: 20px; letter-spacing: .02em; cursor: default;
+    }
+    .lock-badge.locked   { background: #fef2f2; color: var(--red); }
+    .lock-badge.unlocked { background: var(--green-bg); color: var(--green); }
+
     /* ── MAIN ────────────────────────────────────────────── */
     main {
       max-width: 680px;
@@ -498,7 +506,8 @@
   <div class="header-actions">
     <span class="pill">v3.4</span>
     <span class="pill pill-red">Uso Judicial</span>
-    <button class="icon-btn" id="btnSettings" title="Configurar chave de API">⚙️</button>
+    <span class="lock-badge locked" id="lockBadge" title="Estado da sessão">🔒 Bloqueado</span>
+    <button class="icon-btn" id="btnSettings" title="Configurações">⚙️</button>
   </div>
 </header>
 
@@ -573,22 +582,51 @@
   <span>Apenas certidões TJSP · Uso exclusivamente judicial</span>
 </footer>
 
-<!-- ══ MODAL: PRIMEIRO ACESSO ═══════════════════════════════ -->
-<div class="overlay" id="modalFirst">
+<!-- ══ MODAL: CONFIGURAÇÃO INICIAL ══════════════════════════ -->
+<div class="overlay" id="modalSetup">
   <div class="modal">
-    <div class="modal-icon">🔑</div>
-    <h2>Chave da API Anthropic</h2>
+    <div class="modal-icon">🔐</div>
+    <h2>Configuração inicial</h2>
     <p class="desc">
-      Para usar o JusCrim-FA, insira sua chave da API Anthropic.<br>
-      Ela é salva <strong>apenas no seu navegador</strong> e nunca enviada para terceiros.<br><br>
+      Sua chave será <strong>criptografada com AES-256</strong> antes de ser salva.<br>
+      Defina um PIN para protegê-la. O PIN é exigido a cada sessão.<br><br>
       Obtenha sua chave em <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a>.
     </p>
+    <label style="font-size:.78rem;font-weight:600;color:var(--text-2);display:block;margin-bottom:6px;">Chave da API Anthropic</label>
     <div class="input-wrap">
-      <input type="password" id="firstKey" placeholder="sk-ant-..." spellcheck="false" autocomplete="off" />
-      <button class="toggle-pw" data-target="firstKey">👁</button>
+      <input type="password" id="setupKey" placeholder="sk-ant-..." spellcheck="false" autocomplete="off" />
+      <button class="toggle-pw" data-target="setupKey">👁</button>
     </div>
+    <label style="font-size:.78rem;font-weight:600;color:var(--text-2);display:block;margin-bottom:6px;">PIN de proteção</label>
+    <div class="input-wrap">
+      <input type="password" id="setupPin" placeholder="mínimo 4 caracteres" autocomplete="new-password" maxlength="32" />
+      <button class="toggle-pw" data-target="setupPin">👁</button>
+    </div>
+    <label style="font-size:.78rem;font-weight:600;color:var(--text-2);display:block;margin-bottom:6px;">Confirmar PIN</label>
+    <div class="input-wrap" style="margin-bottom:0">
+      <input type="password" id="setupPinConfirm" placeholder="repita o PIN" autocomplete="new-password" maxlength="32" />
+      <button class="toggle-pw" data-target="setupPinConfirm">👁</button>
+    </div>
+    <div class="modal-footer" style="margin-top:18px;">
+      <button class="btn-sm pri" id="btnSetupSave">Criptografar e salvar →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: DESBLOQUEAR ════════════════════════════════════ -->
+<div class="overlay hidden" id="modalUnlock">
+  <div class="modal">
+    <div class="modal-icon">🔒</div>
+    <h2>Desbloquear sessão</h2>
+    <p class="desc">Insira seu PIN para descriptografar a chave de API e iniciar a sessão.</p>
+    <div class="input-wrap">
+      <input type="password" id="unlockPin" placeholder="PIN" autocomplete="current-password" maxlength="32" />
+      <button class="toggle-pw" data-target="unlockPin">👁</button>
+    </div>
+    <div id="unlockError" style="font-size:.78rem;color:var(--red);margin-top:-8px;margin-bottom:10px;display:none;">PIN incorreto. Tente novamente.</div>
     <div class="modal-footer">
-      <button class="btn-sm pri" id="btnFirstSave">Começar →</button>
+      <button class="btn-sm" id="btnUnlockReset" style="color:var(--red);">Redefinir chave</button>
+      <button class="btn-sm pri" id="btnUnlock">Desbloquear →</button>
     </div>
   </div>
 </div>
@@ -598,12 +636,24 @@
   <div class="modal">
     <div class="modal-icon">⚙️</div>
     <h2>Configurações</h2>
-    <p class="desc">Atualize sua chave da API Anthropic. A chave é salva localmente no navegador.</p>
+    <p class="desc">Altere a chave de API ou o PIN. Informe o PIN atual para autenticar.</p>
+    <label style="font-size:.78rem;font-weight:600;color:var(--text-2);display:block;margin-bottom:6px;">PIN atual</label>
     <div class="input-wrap">
-      <input type="password" id="settingsKey" placeholder="sk-ant-..." spellcheck="false" autocomplete="off" />
-      <button class="toggle-pw" data-target="settingsKey">👁</button>
+      <input type="password" id="settingsCurrPin" placeholder="PIN atual" autocomplete="current-password" maxlength="32" />
+      <button class="toggle-pw" data-target="settingsCurrPin">👁</button>
     </div>
-    <div class="modal-footer">
+    <label style="font-size:.78rem;font-weight:600;color:var(--text-2);display:block;margin-bottom:6px;">Nova chave de API <span style="font-weight:400;color:var(--text-3)">(deixe em branco para manter)</span></label>
+    <div class="input-wrap">
+      <input type="password" id="settingsNewKey" placeholder="sk-ant-..." spellcheck="false" autocomplete="off" />
+      <button class="toggle-pw" data-target="settingsNewKey">👁</button>
+    </div>
+    <label style="font-size:.78rem;font-weight:600;color:var(--text-2);display:block;margin-bottom:6px;">Novo PIN <span style="font-weight:400;color:var(--text-3)">(deixe em branco para manter)</span></label>
+    <div class="input-wrap" style="margin-bottom:0">
+      <input type="password" id="settingsNewPin" placeholder="novo PIN" autocomplete="new-password" maxlength="32" />
+      <button class="toggle-pw" data-target="settingsNewPin">👁</button>
+    </div>
+    <div id="settingsError" style="font-size:.78rem;color:var(--red);margin-top:8px;display:none;"></div>
+    <div class="modal-footer" style="margin-top:18px;">
       <button class="btn-sm" id="btnSettingsCancel">Cancelar</button>
       <button class="btn-sm pri" id="btnSettingsSave">Salvar</button>
     </div>
@@ -805,76 +855,216 @@ AUTO-VERIFICAÇÃO OBRIGATÓRIA — confirme antes de entregar:
 Se encontrar inconsistências ou não conseguir conectar informações entre processo original e execução, PARE e solicite esclarecimento.`;
 
 /* ── Estado ─────────────────────────────────────────────── */
-let currentFile = null;
-let rawResult   = '';
+let currentFile  = null;
+let rawResult    = '';
+let sessionKey   = null;   // chave API em memória (nunca gravada em disco)
+
+/* ── Crypto (Web Crypto API) ─────────────────────────────── */
+const STORAGE_KEY = 'juscrim_enc';
+
+function b64(buf) {
+  return btoa(String.fromCharCode(...new Uint8Array(buf)));
+}
+function unb64(s) {
+  return Uint8Array.from(atob(s), c => c.charCodeAt(0));
+}
+
+async function deriveKey(pin, salt) {
+  const enc = new TextEncoder();
+  const km  = await crypto.subtle.importKey('raw', enc.encode(pin), 'PBKDF2', false, ['deriveKey']);
+  return crypto.subtle.deriveKey(
+    { name: 'PBKDF2', salt, iterations: 200000, hash: 'SHA-256' },
+    km,
+    { name: 'AES-GCM', length: 256 },
+    false,
+    ['encrypt', 'decrypt']
+  );
+}
+
+async function encryptApiKey(apiKey, pin) {
+  const salt       = crypto.getRandomValues(new Uint8Array(16));
+  const iv         = crypto.getRandomValues(new Uint8Array(12));
+  const key        = await deriveKey(pin, salt);
+  const ciphertext = await crypto.subtle.encrypt(
+    { name: 'AES-GCM', iv },
+    key,
+    new TextEncoder().encode(apiKey)
+  );
+  return JSON.stringify({ c: b64(ciphertext), i: b64(iv), s: b64(salt) });
+}
+
+async function decryptApiKey(stored, pin) {
+  const { c, i, s } = JSON.parse(stored);
+  const key = await deriveKey(pin, unb64(s));
+  try {
+    const plain = await crypto.subtle.decrypt(
+      { name: 'AES-GCM', iv: unb64(i) },
+      key,
+      unb64(c)
+    );
+    return new TextDecoder().decode(plain);
+  } catch {
+    throw new Error('PIN incorreto');
+  }
+}
 
 /* ── Init ───────────────────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', () => {
-  if (!localStorage.getItem('juscrim_key')) {
-    document.getElementById('modalFirst').classList.remove('hidden');  // já visível por padrão
-  } else {
-    document.getElementById('modalFirst').classList.add('hidden');
-  }
   setupDropzone();
   setupUI();
+
+  const stored = localStorage.getItem(STORAGE_KEY);
+  if (!stored) {
+    show_modal('modalSetup');
+  } else {
+    show_modal('modalUnlock');
+  }
 });
+
+function show_modal(id) {
+  ['modalSetup','modalUnlock','modalSettings'].forEach(m =>
+    document.getElementById(m).classList.toggle('hidden', m !== id));
+}
+
+function setSessionKey(key) {
+  sessionKey = key;
+  const b = document.getElementById('lockBadge');
+  b.textContent = '🔓 Sessão ativa';
+  b.className = 'lock-badge unlocked';
+}
 
 /* ── UI wiring ──────────────────────────────────────────── */
 function setupUI() {
-  // Date change
   document.getElementById('dataCrime').addEventListener('input', syncBtn);
-
-  // Analyze
   document.getElementById('btnAnalyze').addEventListener('click', runAnalysis);
-
-  // New analysis
   document.getElementById('btnNew').addEventListener('click', resetToForm);
+  document.getElementById('btnCopy').addEventListener('click', () =>
+    navigator.clipboard.writeText(rawResult).then(() => toast('✅ Resultado copiado!')));
 
-  // Copy result
-  document.getElementById('btnCopy').addEventListener('click', () => {
-    navigator.clipboard.writeText(rawResult).then(() => toast('✅ Resultado copiado!'));
+  // Setup
+  document.getElementById('btnSetupSave').addEventListener('click', doSetup);
+  document.getElementById('setupPin').addEventListener('keydown', e => { if (e.key==='Enter') document.getElementById('setupPinConfirm').focus(); });
+  document.getElementById('setupPinConfirm').addEventListener('keydown', e => { if (e.key==='Enter') doSetup(); });
+
+  // Unlock
+  document.getElementById('btnUnlock').addEventListener('click', doUnlock);
+  document.getElementById('unlockPin').addEventListener('keydown', e => { if (e.key==='Enter') doUnlock(); });
+  document.getElementById('btnUnlockReset').addEventListener('click', () => {
+    if (!confirm('Remover a chave salva e configurar novamente?')) return;
+    localStorage.removeItem(STORAGE_KEY);
+    sessionKey = null;
+    show_modal('modalSetup');
   });
 
-  // Settings open/close/save
+  // Settings
   document.getElementById('btnSettings').addEventListener('click', openSettings);
   document.getElementById('btnSettingsCancel').addEventListener('click', () =>
     document.getElementById('modalSettings').classList.add('hidden'));
-  document.getElementById('btnSettingsSave').addEventListener('click', saveSettings);
-
-  // First-run save
-  document.getElementById('btnFirstSave').addEventListener('click', saveFirstKey);
-
-  // Password toggles
-  document.querySelectorAll('.toggle-pw').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const input = document.getElementById(btn.dataset.target);
-      input.type = input.type === 'password' ? 'text' : 'password';
-      btn.textContent = input.type === 'password' ? '👁' : '🙈';
-    });
-  });
+  document.getElementById('btnSettingsSave').addEventListener('click', doSettingsSave);
 
   // Remove file
   document.getElementById('btnRemove').addEventListener('click', removeFile);
+
+  // Password toggles
+  document.querySelectorAll('.toggle-pw').forEach(btn =>
+    btn.addEventListener('click', () => {
+      const inp = document.getElementById(btn.dataset.target);
+      inp.type = inp.type === 'password' ? 'text' : 'password';
+      btn.textContent = inp.type === 'password' ? '👁' : '🙈';
+    }));
 }
 
-/* ── API key ────────────────────────────────────────────── */
-function saveFirstKey() {
-  const key = document.getElementById('firstKey').value.trim();
-  if (!key.startsWith('sk-')) { toast('⚠️ Chave inválida — deve começar com "sk-"'); return; }
-  localStorage.setItem('juscrim_key', key);
-  document.getElementById('modalFirst').classList.add('hidden');
-  toast('✅ Chave salva!');
+/* ── Configuração inicial ────────────────────────────────── */
+async function doSetup() {
+  const apiKey  = document.getElementById('setupKey').value.trim();
+  const pin     = document.getElementById('setupPin').value;
+  const pinConf = document.getElementById('setupPinConfirm').value;
+
+  if (!apiKey.startsWith('sk-'))     { toast('⚠️ Chave inválida — deve começar com "sk-"'); return; }
+  if (pin.length < 4)                { toast('⚠️ PIN deve ter pelo menos 4 caracteres'); return; }
+  if (pin !== pinConf)               { toast('⚠️ PINs não coincidem'); return; }
+
+  const btn = document.getElementById('btnSetupSave');
+  btn.disabled = true; btn.textContent = 'Criptografando...';
+  try {
+    const enc = await encryptApiKey(apiKey, pin);
+    localStorage.setItem(STORAGE_KEY, enc);
+    setSessionKey(apiKey);
+    show_modal('');  // fecha todos
+    document.getElementById('modalSetup').classList.add('hidden');
+    toast('✅ Chave criptografada e salva!');
+    // limpa campos
+    ['setupKey','setupPin','setupPinConfirm'].forEach(id => document.getElementById(id).value = '');
+  } catch (err) {
+    toast('❌ Erro: ' + err.message);
+  }
+  btn.disabled = false; btn.textContent = 'Criptografar e salvar →';
 }
 
+/* ── Desbloquear ─────────────────────────────────────────── */
+async function doUnlock() {
+  const pin = document.getElementById('unlockPin').value;
+  const errEl = document.getElementById('unlockError');
+  errEl.style.display = 'none';
+
+  const btn = document.getElementById('btnUnlock');
+  btn.disabled = true; btn.textContent = 'Verificando...';
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    const apiKey = await decryptApiKey(stored, pin);
+    setSessionKey(apiKey);
+    document.getElementById('modalUnlock').classList.add('hidden');
+    document.getElementById('unlockPin').value = '';
+    toast('✅ Sessão desbloqueada!');
+  } catch {
+    errEl.style.display = 'block';
+    document.getElementById('unlockPin').value = '';
+    document.getElementById('unlockPin').focus();
+  }
+  btn.disabled = false; btn.textContent = 'Desbloquear →';
+}
+
+/* ── Configurações ───────────────────────────────────────── */
 function openSettings() {
-  document.getElementById('settingsKey').value = localStorage.getItem('juscrim_key') || '';
+  ['settingsCurrPin','settingsNewKey','settingsNewPin'].forEach(id =>
+    document.getElementById(id).value = '');
+  document.getElementById('settingsError').style.display = 'none';
   document.getElementById('modalSettings').classList.remove('hidden');
 }
 
-function saveSettings() {
-  const key = document.getElementById('settingsKey').value.trim();
-  if (key) { localStorage.setItem('juscrim_key', key); toast('✅ Chave atualizada!'); }
-  document.getElementById('modalSettings').classList.add('hidden');
+async function doSettingsSave() {
+  const currPin = document.getElementById('settingsCurrPin').value;
+  const newKey  = document.getElementById('settingsNewKey').value.trim();
+  const newPin  = document.getElementById('settingsNewPin').value;
+  const errEl   = document.getElementById('settingsError');
+  errEl.style.display = 'none';
+
+  const btn = document.getElementById('btnSettingsSave');
+  btn.disabled = true; btn.textContent = 'Salvando...';
+
+  try {
+    // Verifica PIN atual descriptografando
+    const stored = localStorage.getItem(STORAGE_KEY);
+    const currentApiKey = stored ? await decryptApiKey(stored, currPin) : null;
+
+    if (stored && !currentApiKey) throw new Error('PIN atual incorreto');
+
+    const finalKey = newKey || currentApiKey || sessionKey;
+    const finalPin = newPin.length >= 4 ? newPin : (newPin.length > 0 ? null : currPin);
+
+    if (!finalPin) { errEl.textContent = 'Novo PIN deve ter pelo menos 4 caracteres.'; errEl.style.display='block'; btn.disabled=false; btn.textContent='Salvar'; return; }
+    if (newKey && !newKey.startsWith('sk-')) { errEl.textContent = 'Chave inválida.'; errEl.style.display='block'; btn.disabled=false; btn.textContent='Salvar'; return; }
+
+    const enc = await encryptApiKey(finalKey, finalPin);
+    localStorage.setItem(STORAGE_KEY, enc);
+    setSessionKey(finalKey);
+    document.getElementById('modalSettings').classList.add('hidden');
+    toast('✅ Configurações salvas!');
+  } catch (err) {
+    errEl.textContent = err.message;
+    errEl.style.display = 'block';
+  }
+  btn.disabled = false; btn.textContent = 'Salvar';
 }
 
 /* ── Dropzone ───────────────────────────────────────────── */
@@ -926,8 +1116,8 @@ function fmtBytes(b) {
 
 /* ── Analysis ───────────────────────────────────────────── */
 async function runAnalysis() {
-  const key = localStorage.getItem('juscrim_key');
-  if (!key) { openSettings(); return; }
+  const key = sessionKey;
+  if (!key) { show_modal('modalUnlock'); return; }
 
   const isoDate = document.getElementById('dataCrime').value;
   const [y, m, d] = isoDate.split('-');
