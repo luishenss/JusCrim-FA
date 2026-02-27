@@ -4,315 +4,618 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>JusCrim-FA — Análise de Antecedentes</title>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <style>
+    :root {
+      --bg:           #f1f5f9;
+      --surface:      #ffffff;
+      --surface-2:    #f8fafc;
+      --border:       #e2e8f0;
+      --primary:      #4f46e5;
+      --primary-h:    #4338ca;
+      --primary-bg:   #eef2ff;
+      --text:         #0f172a;
+      --text-2:       #475569;
+      --text-3:       #94a3b8;
+      --green:        #059669;
+      --green-bg:     #ecfdf5;
+      --green-border: #a7f3d0;
+      --red:          #dc2626;
+      --red-bg:       #fef2f2;
+      --amber-bg:     #fffbeb;
+      --amber:        #b45309;
+      --radius:       12px;
+      --shadow:       0 1px 3px rgba(0,0,0,.07), 0 1px 2px rgba(0,0,0,.04);
+      --shadow-md:    0 4px 6px -1px rgba(0,0,0,.07), 0 2px 4px -2px rgba(0,0,0,.04);
+      --shadow-lg:    0 10px 25px -5px rgba(0,0,0,.1), 0 4px 6px -4px rgba(0,0,0,.04);
+    }
+
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      font-family: 'Segoe UI', system-ui, sans-serif;
-      background: #0f1117;
-      color: #e2e8f0;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
       min-height: 100vh;
-      display: flex;
-      flex-direction: column;
+      line-height: 1.5;
     }
 
+    /* ── HEADER ─────────────────────────────────────────── */
     header {
-      background: #1a1d2e;
-      border-bottom: 1px solid #2d3148;
-      padding: 20px 32px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 40px;
+      height: 64px;
       display: flex;
       align-items: center;
-      gap: 14px;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: var(--shadow);
     }
 
-    header .logo {
-      width: 40px; height: 40px;
-      background: linear-gradient(135deg, #3b5bdb, #7048e8);
-      border-radius: 10px;
+    .header-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-icon {
+      width: 38px; height: 38px;
+      background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+      border-radius: 9px;
       display: flex; align-items: center; justify-content: center;
-      font-size: 20px;
+      font-size: 19px;
+      flex-shrink: 0;
+      box-shadow: 0 2px 8px rgba(79,70,229,.3);
     }
 
-    header h1 { font-size: 1.25rem; font-weight: 700; color: #fff; }
-    header span { font-size: 0.8rem; color: #7c85a2; margin-left: 8px; }
-
-    .badge {
-      margin-left: auto;
-      background: #1e293b;
-      border: 1px solid #334155;
-      border-radius: 20px;
-      padding: 4px 12px;
-      font-size: 0.72rem;
-      color: #94a3b8;
+    .brand-name {
+      font-size: 1rem;
+      font-weight: 800;
+      color: var(--text);
+      letter-spacing: -.01em;
     }
 
-    main {
-      flex: 1;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 0;
-    }
-
-    .panel {
-      padding: 32px;
-      border-right: 1px solid #1e2236;
-    }
-    .panel:last-child { border-right: none; }
-
-    .panel-title {
+    .brand-sub {
       font-size: 0.7rem;
-      font-weight: 700;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: #7c85a2;
-      margin-bottom: 20px;
+      color: var(--text-3);
+      font-weight: 400;
+      margin-top: 1px;
     }
 
-    /* ── PAINEL 1: Gerador ── */
-    label {
+    .header-actions { display: flex; align-items: center; gap: 8px; }
+
+    .pill {
+      background: var(--primary-bg);
+      color: var(--primary);
+      font-size: 0.68rem;
+      font-weight: 700;
+      padding: 3px 9px;
+      border-radius: 20px;
+      letter-spacing: .02em;
+    }
+
+    .pill-red {
+      background: var(--red-bg);
+      color: var(--red);
+    }
+
+    .icon-btn {
+      width: 36px; height: 36px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--surface);
+      color: var(--text-2);
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px;
+      transition: all .15s;
+      flex-shrink: 0;
+    }
+    .icon-btn:hover { background: var(--surface-2); color: var(--text); border-color: #c7d2e0; }
+
+    /* ── MAIN ────────────────────────────────────────────── */
+    main {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 40px 24px 100px;
+    }
+
+    /* ── CARD ────────────────────────────────────────────── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px 28px 24px;
+      box-shadow: var(--shadow);
+      margin-bottom: 16px;
+    }
+
+    .section-label {
+      font-size: 0.68rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--text-3);
+      margin-bottom: 18px;
+    }
+
+    /* ── FORM INPUTS ─────────────────────────────────────── */
+    .field { margin-bottom: 20px; }
+
+    .field label {
       display: block;
-      font-size: 0.85rem;
-      color: #94a3b8;
-      margin-bottom: 6px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--text-2);
+      margin-bottom: 7px;
     }
 
     input[type="date"] {
       width: 100%;
       padding: 10px 14px;
-      background: #1a1d2e;
-      border: 1px solid #2d3148;
+      border: 1.5px solid var(--border);
       border-radius: 8px;
-      color: #e2e8f0;
-      font-size: 0.95rem;
-      margin-bottom: 20px;
+      font-size: 0.92rem;
+      color: var(--text);
+      background: var(--surface);
       outline: none;
-      transition: border-color .2s;
+      transition: border-color .15s, box-shadow .15s;
+      font-family: inherit;
     }
-    input[type="date"]:focus { border-color: #3b5bdb; }
-    input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.6); }
-
-    .msg-box {
-      background: #1a1d2e;
-      border: 1px solid #2d3148;
-      border-radius: 10px;
-      padding: 16px;
-      font-family: 'Courier New', monospace;
-      font-size: 0.88rem;
-      color: #a5f3fc;
-      line-height: 1.7;
-      white-space: pre-wrap;
-      min-height: 90px;
+    input[type="date"]:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(79,70,229,.1);
     }
 
-    .actions {
-      display: flex;
-      gap: 10px;
-      margin-top: 14px;
-      flex-wrap: wrap;
-    }
-
-    .btn {
-      flex: 1;
-      padding: 10px 16px;
-      border: none;
-      border-radius: 8px;
-      font-size: 0.85rem;
-      font-weight: 600;
+    /* ── DROPZONE ────────────────────────────────────────── */
+    .dropzone {
+      border: 2px dashed var(--border);
+      border-radius: var(--radius);
+      padding: 36px 24px;
+      text-align: center;
       cursor: pointer;
       transition: all .2s;
-      display: flex; align-items: center; justify-content: center; gap: 7px;
+      position: relative;
+      background: var(--surface-2);
     }
-
-    .btn-primary {
-      background: linear-gradient(135deg, #3b5bdb, #7048e8);
-      color: #fff;
+    .dropzone:hover, .dropzone.drag-over {
+      border-color: var(--primary);
+      background: var(--primary-bg);
     }
-    .btn-primary:hover { opacity: 0.88; transform: translateY(-1px); }
-
-    .btn-secondary {
-      background: #1e2236;
-      border: 1px solid #2d3148;
-      color: #94a3b8;
-    }
-    .btn-secondary:hover { background: #252a40; color: #e2e8f0; }
-
-    .btn-success {
-      background: #064e3b;
-      border: 1px solid #065f46;
-      color: #6ee7b7;
-    }
-    .btn-success:hover { background: #065f46; }
-
-    .toast {
-      position: fixed;
-      bottom: 28px; right: 28px;
-      background: #064e3b;
-      border: 1px solid #065f46;
-      color: #6ee7b7;
-      padding: 12px 20px;
-      border-radius: 10px;
-      font-size: 0.85rem;
-      font-weight: 600;
+    .dropzone input[type="file"] {
+      position: absolute;
+      inset: 0;
       opacity: 0;
-      transform: translateY(10px);
-      transition: all .3s;
-      pointer-events: none;
-      z-index: 999;
+      cursor: pointer;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
     }
-    .toast.show { opacity: 1; transform: translateY(0); }
+    .dz-icon { font-size: 2.2rem; margin-bottom: 10px; line-height: 1; }
+    .dz-title { font-size: 0.9rem; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+    .dz-sub   { font-size: 0.77rem; color: var(--text-3); }
 
-    /* ── Divider card ── */
-    .info-card {
-      background: #1a1d2e;
-      border: 1px solid #2d3148;
+    /* ── FILE ATTACHED ───────────────────────────────────── */
+    .file-chip {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 14px;
+      background: var(--green-bg);
+      border: 1.5px solid var(--green-border);
+      border-radius: 8px;
+    }
+    .file-chip-icon { font-size: 1.35rem; flex-shrink: 0; }
+    .file-chip-info { flex: 1; min-width: 0; }
+    .file-chip-name {
+      font-size: 0.83rem;
+      font-weight: 600;
+      color: #065f46;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .file-chip-size { font-size: 0.73rem; color: var(--green); margin-top: 1px; }
+    .file-chip-remove {
+      background: none; border: none;
+      color: var(--green); cursor: pointer;
+      font-size: 1rem; padding: 4px; border-radius: 4px;
+      transition: color .15s; flex-shrink: 0;
+    }
+    .file-chip-remove:hover { color: var(--red); }
+
+    /* ── ANALYZE BUTTON ──────────────────────────────────── */
+    .btn-analyze {
+      width: 100%;
+      padding: 13px;
+      background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+      color: #fff;
+      border: none;
       border-radius: 10px;
-      padding: 14px 16px;
-      margin-top: 20px;
-      font-size: 0.82rem;
-      color: #7c85a2;
-      line-height: 1.6;
+      font-size: 0.92rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all .2s;
+      margin-top: 8px;
+      box-shadow: 0 4px 14px rgba(79,70,229,.28);
+      letter-spacing: .01em;
+      font-family: inherit;
     }
-    .info-card strong { color: #94a3b8; }
+    .btn-analyze:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 18px rgba(79,70,229,.36);
+    }
+    .btn-analyze:active:not(:disabled) { transform: translateY(0); }
+    .btn-analyze:disabled { opacity: .45; cursor: not-allowed; box-shadow: none; }
 
-    /* ── PAINEL 2: Prompt ── */
-    .prompt-header {
+    /* ── NOTICE ──────────────────────────────────────────── */
+    .notice {
+      display: flex;
+      gap: 9px;
+      align-items: flex-start;
+      padding: 11px 14px;
+      border-radius: 8px;
+      font-size: 0.78rem;
+      line-height: 1.55;
+      margin-top: 16px;
+    }
+    .notice-warn { background: var(--amber-bg); color: var(--amber); border: 1px solid #fcd34d; }
+    .notice-icon { flex-shrink: 0; margin-top: 1px; }
+
+    /* ── LOADING ─────────────────────────────────────────── */
+    .loading-wrap {
+      text-align: center;
+      padding: 52px 28px;
+    }
+    .spinner {
+      width: 44px; height: 44px;
+      border: 3px solid var(--border);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin .75s linear infinite;
+      margin: 0 auto 18px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-title { font-size: 0.95rem; font-weight: 600; color: var(--text); margin-bottom: 5px; }
+    .loading-sub   { font-size: 0.8rem; color: var(--text-3); }
+
+    /* ── RESULT ──────────────────────────────────────────── */
+    .result-topbar {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 14px;
+      margin-bottom: 22px;
+      flex-wrap: wrap;
+      gap: 10px;
     }
 
-    .version-pill {
-      background: #312e81;
-      border: 1px solid #4338ca;
-      color: #a5b4fc;
-      font-size: 0.72rem;
+    .badge-ok {
+      display: flex; align-items: center; gap: 6px;
+      background: var(--green-bg);
+      color: var(--green);
+      border: 1px solid var(--green-border);
+      font-size: 0.73rem;
       font-weight: 700;
-      padding: 3px 10px;
+      padding: 4px 12px;
       border-radius: 20px;
     }
 
-    .prompt-area {
-      background: #1a1d2e;
-      border: 1px solid #2d3148;
-      border-radius: 10px;
-      padding: 16px;
-      font-family: 'Courier New', monospace;
+    .result-actions { display: flex; gap: 8px; }
+
+    .btn-sm {
+      padding: 7px 14px;
+      border: 1.5px solid var(--border);
+      border-radius: 7px;
+      background: var(--surface);
+      color: var(--text-2);
       font-size: 0.78rem;
-      color: #cbd5e1;
-      line-height: 1.65;
-      height: calc(100vh - 260px);
-      overflow-y: auto;
-      white-space: pre-wrap;
-      resize: none;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .15s;
+      display: flex; align-items: center; gap: 6px;
+      font-family: inherit;
+    }
+    .btn-sm:hover { background: var(--surface-2); color: var(--text); }
+    .btn-sm.pri {
+      background: var(--primary); border-color: var(--primary); color: #fff;
+    }
+    .btn-sm.pri:hover { background: var(--primary-h); border-color: var(--primary-h); }
+
+    /* ── MARKDOWN RESULT ─────────────────────────────────── */
+    .md {
+      font-size: 0.875rem;
+      line-height: 1.75;
+      color: var(--text);
+    }
+    .md h1 { font-size: 1.1rem; margin: 24px 0 10px; color: var(--text); }
+    .md h2 { font-size: 1rem; margin: 20px 0 8px; color: var(--text); }
+    .md h3 {
+      font-size: 0.875rem; margin: 18px 0 6px;
+      color: var(--primary); font-weight: 700;
+    }
+    .md p { margin-bottom: 10px; }
+    .md ul, .md ol { padding-left: 22px; margin-bottom: 10px; }
+    .md li { margin-bottom: 4px; }
+    .md strong { font-weight: 700; }
+    .md em { font-style: italic; }
+    .md hr { border: none; border-top: 1px solid var(--border); margin: 22px 0; }
+    .md blockquote {
+      border-left: 3px solid var(--primary);
+      padding-left: 14px;
+      color: var(--text-2);
+      margin: 10px 0;
+      font-style: italic;
+    }
+    .md code {
+      background: var(--surface-2);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.82em;
+      font-family: 'Courier New', monospace;
+      color: var(--primary);
+    }
+    .md table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0;
+      font-size: 0.8rem;
+    }
+    .md th {
+      background: var(--surface-2);
+      padding: 9px 12px;
+      text-align: left;
+      font-weight: 700;
+      border: 1px solid var(--border);
+      color: var(--text-2);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+    .md td {
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      vertical-align: top;
+    }
+    .md tr:nth-child(even) td { background: #fafafa; }
+
+    /* streaming cursor */
+    .cursor {
+      display: inline-block;
+      width: 2px; height: 1em;
+      background: var(--primary);
+      animation: blink .65s step-end infinite;
+      vertical-align: text-bottom;
+      margin-left: 2px;
+    }
+    @keyframes blink { 50% { opacity: 0; } }
+
+    /* ── MODAL ───────────────────────────────────────────── */
+    .overlay {
+      position: fixed; inset: 0;
+      background: rgba(15,23,42,.45);
+      backdrop-filter: blur(4px);
+      z-index: 200;
+      display: flex; align-items: center; justify-content: center;
+      padding: 24px;
+    }
+    .overlay.hidden { display: none; }
+
+    .modal {
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 32px;
+      width: 100%; max-width: 420px;
+      box-shadow: var(--shadow-lg);
+      border: 1px solid var(--border);
+    }
+    .modal-icon { font-size: 1.8rem; margin-bottom: 12px; }
+    .modal h2 { font-size: 1.1rem; font-weight: 800; margin-bottom: 8px; }
+    .modal .desc {
+      font-size: 0.81rem; color: var(--text-2); line-height: 1.55;
+      margin-bottom: 20px;
+    }
+    .modal .desc a { color: var(--primary); text-decoration: none; }
+    .modal .desc a:hover { text-decoration: underline; }
+
+    .input-wrap { position: relative; margin-bottom: 16px; }
+    .input-wrap input {
+      width: 100%;
+      padding: 10px 38px 10px 14px;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.88rem;
+      outline: none;
+      transition: border-color .15s, box-shadow .15s;
+      font-family: monospace;
+      color: var(--text);
+    }
+    .input-wrap input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(79,70,229,.1);
+    }
+    .toggle-pw {
+      position: absolute; right: 10px; top: 50%;
+      transform: translateY(-50%);
+      background: none; border: none; cursor: pointer;
+      color: var(--text-3); font-size: 0.85rem;
+      padding: 2px 4px;
+    }
+    .toggle-pw:hover { color: var(--text-2); }
+
+    .modal-footer {
+      display: flex; gap: 8px; justify-content: flex-end; margin-top: 4px;
     }
 
-    .prompt-area::-webkit-scrollbar { width: 6px; }
-    .prompt-area::-webkit-scrollbar-track { background: #1a1d2e; }
-    .prompt-area::-webkit-scrollbar-thumb { background: #2d3148; border-radius: 3px; }
-
-    /* Syntax highlight simples */
-    .prompt-area .kw  { color: #7dd3fc; }
-    .prompt-area .val { color: #a5f3fc; }
-    .prompt-area .hd  { color: #f0abfc; font-weight: bold; }
-
+    /* ── FOOTER ──────────────────────────────────────────── */
     footer {
-      background: #1a1d2e;
-      border-top: 1px solid #2d3148;
-      padding: 12px 32px;
-      font-size: 0.72rem;
-      color: #475569;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+      position: fixed; bottom: 0; left: 0; right: 0;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      padding: 10px 40px;
+      font-size: 0.7rem;
+      color: var(--text-3);
+      display: flex; justify-content: space-between; align-items: center;
+      box-shadow: 0 -1px 0 var(--border);
     }
+    footer a { color: var(--text-3); text-decoration: none; }
+    footer a:hover { color: var(--text-2); }
 
-    footer a { color: #7c85a2; text-decoration: none; }
-    footer a:hover { color: #e2e8f0; }
+    .hidden { display: none !important; }
 
-    @media (max-width: 800px) {
-      main { grid-template-columns: 1fr; }
-      .panel { border-right: none; border-bottom: 1px solid #1e2236; }
-      .prompt-area { height: 400px; }
+    /* ── TOAST ───────────────────────────────────────────── */
+    #toast {
+      position: fixed; bottom: 60px; right: 24px; z-index: 999;
+      background: #0f172a; color: #e2e8f0;
+      padding: 10px 18px;
+      border-radius: 8px; font-size: 0.82rem; font-weight: 600;
+      box-shadow: var(--shadow-lg);
+      opacity: 0; transform: translateY(8px);
+      transition: all .25s; pointer-events: none;
+    }
+    #toast.show { opacity: 1; transform: translateY(0); }
+
+    @media (max-width: 600px) {
+      main   { padding: 24px 16px 90px; }
+      header { padding: 0 20px; }
+      footer { padding: 10px 20px; font-size: 0.65rem; }
     }
   </style>
 </head>
 <body>
 
+<!-- ══ HEADER ══════════════════════════════════════════════ -->
 <header>
-  <div class="logo">⚖️</div>
-  <div>
-    <h1>JusCrim-FA <span>Análise de Antecedentes Criminais</span></h1>
+  <div class="header-brand">
+    <div class="brand-icon">⚖️</div>
+    <div>
+      <div class="brand-name">JusCrim-FA</div>
+      <div class="brand-sub">Análise de Antecedentes Criminais · TJSP</div>
+    </div>
   </div>
-  <div class="badge">TJSP · Uso Judicial</div>
+  <div class="header-actions">
+    <span class="pill">v3.4</span>
+    <span class="pill pill-red">Uso Judicial</span>
+    <button class="icon-btn" id="btnSettings" title="Configurar chave de API">⚙️</button>
+  </div>
 </header>
 
+<!-- ══ MAIN ════════════════════════════════════════════════ -->
 <main>
 
-  <!-- PAINEL 1: Gerador de mensagem -->
-  <div class="panel">
-    <div class="panel-title">📋 Gerador de Análise</div>
+  <!-- FORM -->
+  <div id="viewForm">
+    <div class="card">
+      <div class="section-label">Nova Análise</div>
 
-    <label for="dataCrime">Data do fato do crime atual</label>
-    <input type="date" id="dataCrime" />
+      <div class="field">
+        <label for="dataCrime">Data do fato do crime atual</label>
+        <input type="date" id="dataCrime" />
+      </div>
 
-    <label>Mensagem para enviar ao modelo</label>
-    <div class="msg-box" id="msgPreview">Preencha a data acima para gerar a mensagem.</div>
+      <div class="field">
+        <label>Certidão de Antecedentes</label>
 
-    <div class="actions">
-      <button class="btn btn-primary" onclick="copiarMensagem()">
-        📋 Copiar mensagem
-      </button>
-      <button class="btn btn-secondary" onclick="abrirClaude()">
-        🔗 Abrir Claude
-      </button>
-    </div>
+        <div class="dropzone" id="dropzone">
+          <input type="file" id="fileInput" accept=".pdf,.txt" />
+          <div class="dz-icon">📄</div>
+          <div class="dz-title">Arraste o arquivo aqui</div>
+          <div class="dz-sub">ou clique para procurar · PDF ou TXT · máx. 15 páginas</div>
+        </div>
 
-    <div class="info-card">
-      <strong>Como usar:</strong><br>
-      1. Informe a data do crime atual acima<br>
-      2. Copie o prompt do painel direito → cole no <em>system prompt</em> do modelo<br>
-      3. Copie a mensagem gerada → cole na conversa junto com o PDF da certidão<br>
-      4. Envie e aguarde a análise completa
-    </div>
+        <div class="file-chip hidden" id="fileChip">
+          <div class="file-chip-icon">📎</div>
+          <div class="file-chip-info">
+            <div class="file-chip-name" id="chipName"></div>
+            <div class="file-chip-size" id="chipSize"></div>
+          </div>
+          <button class="file-chip-remove" id="btnRemove" title="Remover arquivo">✕</button>
+        </div>
+      </div>
 
-    <div class="info-card" style="margin-top:12px; border-color:#7f1d1d; background:#1c0a0a;">
-      <strong style="color:#fca5a5;">⚠️ Aviso legal:</strong>
-      <span style="color:#f87171;"> Ferramenta de apoio judicial. Não substitui o juízo do magistrado.
-      Verifique os resultados antes de utilizar em processos. Dados sensíveis — observe a LGPD.</span>
+      <button class="btn-analyze" id="btnAnalyze" disabled>Analisar Certidão</button>
+
+      <div class="notice notice-warn">
+        <span class="notice-icon">⚠️</span>
+        <span>Ferramenta de apoio judicial. Não substitui o juízo do magistrado. Verifique os resultados antes de utilizar em processos. Trate dados criminais conforme a LGPD.</span>
+      </div>
     </div>
   </div>
 
-  <!-- PAINEL 2: Prompt -->
-  <div class="panel">
-    <div class="panel-title">
-      <div class="prompt-header">
-        <span>⚙️ System Prompt</span>
-        <span class="version-pill">v3.4</span>
+  <!-- LOADING -->
+  <div id="viewLoading" class="card loading-wrap hidden">
+    <div class="spinner"></div>
+    <div class="loading-title">Analisando certidão...</div>
+    <div class="loading-sub">Lendo todas as páginas e verificando condenações</div>
+  </div>
+
+  <!-- RESULT -->
+  <div id="viewResult" class="hidden">
+    <div class="card">
+      <div class="result-topbar">
+        <span class="badge-ok">✓ Análise concluída</span>
+        <div class="result-actions">
+          <button class="btn-sm" id="btnCopy">📋 Copiar</button>
+          <button class="btn-sm pri" id="btnNew">+ Nova análise</button>
+        </div>
       </div>
+      <div class="md" id="mdResult"></div>
     </div>
-
-    <div class="actions" style="margin-bottom:14px;">
-      <button class="btn btn-success" onclick="copiarPrompt()">
-        📋 Copiar prompt completo
-      </button>
-    </div>
-
-    <div class="prompt-area" id="promptArea">Carregando prompt...</div>
   </div>
 
 </main>
 
+<!-- ══ FOOTER ══════════════════════════════════════════════ -->
 <footer>
-  <span>JusCrim-FA · CC BY-NC 4.0 · <a href="https://github.com/luishenss/JusCrim-FA" target="_blank">github.com/luishenss/JusCrim-FA</a></span>
-  <span>Apenas certidões TJSP · Máx. 15 páginas</span>
+  <span>JusCrim-FA · CC BY-NC 4.0 · <a href="https://github.com/luishenss/JusCrim-FA" target="_blank">GitHub</a></span>
+  <span>Apenas certidões TJSP · Uso exclusivamente judicial</span>
 </footer>
 
-<div class="toast" id="toast"></div>
+<!-- ══ MODAL: PRIMEIRO ACESSO ═══════════════════════════════ -->
+<div class="overlay" id="modalFirst">
+  <div class="modal">
+    <div class="modal-icon">🔑</div>
+    <h2>Chave da API Anthropic</h2>
+    <p class="desc">
+      Para usar o JusCrim-FA, insira sua chave da API Anthropic.<br>
+      Ela é salva <strong>apenas no seu navegador</strong> e nunca enviada para terceiros.<br><br>
+      Obtenha sua chave em <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a>.
+    </p>
+    <div class="input-wrap">
+      <input type="password" id="firstKey" placeholder="sk-ant-..." spellcheck="false" autocomplete="off" />
+      <button class="toggle-pw" data-target="firstKey">👁</button>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-sm pri" id="btnFirstSave">Começar →</button>
+    </div>
+  </div>
+</div>
 
+<!-- ══ MODAL: CONFIGURAÇÕES ════════════════════════════════ -->
+<div class="overlay hidden" id="modalSettings">
+  <div class="modal">
+    <div class="modal-icon">⚙️</div>
+    <h2>Configurações</h2>
+    <p class="desc">Atualize sua chave da API Anthropic. A chave é salva localmente no navegador.</p>
+    <div class="input-wrap">
+      <input type="password" id="settingsKey" placeholder="sk-ant-..." spellcheck="false" autocomplete="off" />
+      <button class="toggle-pw" data-target="settingsKey">👁</button>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-sm" id="btnSettingsCancel">Cancelar</button>
+      <button class="btn-sm pri" id="btnSettingsSave">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<!-- ══ SCRIPT ══════════════════════════════════════════════ -->
 <script>
-  // ── Prompt completo embutido ──────────────────────────────────────────────
-  const PROMPT = `ANÁLISE DE CERTIDÃO DE ANTECEDENTES CRIMINAIS
+/* ── System prompt embutido ─────────────────────────────── */
+const SYSTEM_PROMPT = `ANÁLISE DE CERTIDÃO DE ANTECEDENTES CRIMINAIS
 Função: Identificar maus antecedentes e reincidência criminal
 Versão: 3.4
 Uso: Fins exclusivamente judiciais
@@ -356,19 +659,19 @@ ETAPA 1 - LEITURA COMPLETA ANTES DE QUALQUER ANÁLISE:
 - Leia LINHA POR LINHA de todas as páginas antes de extrair qualquer informação
 - Mapeie TODOS os processos mencionados no documento
 - CRUCIAL: Identifique pares de processos relacionados:
-  - Processo de Execução: Aparece como "Execução de Pena: [número] ([número original])"
+  - Processo de Execução: Aparece como "Execução de Pena: [número da execução] ([número original])"
   - Processo Original: O número entre parênteses é o processo da fase de conhecimento
   - Analise SEMPRE em conjunto - dados podem estar distribuídos entre ambos
 
 ETAPA 2 - IDENTIFICAÇÃO DE CONDENAÇÕES VÁLIDAS:
 - Procure por processos que contenham:
   - "Sentença Condenatória" OU "Acórdão Condenatório" OU "Acordão - Sentença"
-  - E "Trânsito em julgado para a Defesa" (com possíveis variações)
+  - E "Trânsito em julgado para a Defesa" (com possíveis variações de maiúsculas/minúsculas)
 
-REGRA CRÍTICA: A data do trânsito em julgado NÃO exclui a condenação da análise - apenas define se será reincidência, maus antecedentes ou nenhum dos institutos.
+REGRA CRÍTICA: A data do trânsito em julgado (anterior/posterior ao crime atual) NÃO exclui a condenação da análise - apenas define se será reincidência, maus antecedentes ou nenhum dos institutos.
 
 ANALISE EXTINÇÕES COM CUIDADO:
-- INCLUA: "Extinção da Punibilidade" que ocorreu APÓS sentença condenatória
+- INCLUA: "Extinção da Punibilidade" que ocorreu APÓS sentença condenatória (pode configurar maus antecedentes/reincidência)
 - EXCLUA: "Extinção da Punibilidade" que ocorreu ANTES de qualquer condenação
 
 IGNORE COMPLETAMENTE:
@@ -387,6 +690,11 @@ Antes de classificar qualquer condenação, responda:
 Se qualquer resposta for "Não" ou "Não encontrado" → EXCLUIR
 Se todas forem "Sim" → INCLUIR e classificar conforme data
 
+- Para cada par processo original + execução, extraia informações de AMBOS
+- Conecte as informações: O mesmo caso pode ter dados espalhados entre processo original e execução
+- Números de processo: Cite AMBOS (original e execução) para rastreabilidade completa
+- Datas críticas: Podem estar em qualquer uma das seções - analise toda a certidão
+
 ETAPA 4 - BUSCA SISTEMÁTICA POR TRÂNSITO EM JULGADO:
 - Procure por variações: "Trânsito em julgado para a Defesa", "Trânsito em Julgado para a Defesa"
 - A data pode estar no processo original OU na execução
@@ -396,7 +704,7 @@ ETAPA 4 - BUSCA SISTEMÁTICA POR TRÂNSITO EM JULGADO:
 
 DADOS A EXTRAIR:
 Para cada condenação válida (analisando processo original + execução em conjunto):
-1. Vara criminal: [onde tramitou] (página X)
+1. Vara criminal: [onde tramitou o processo original] (página X)
 2. Números dos processos: [Original: XXXX] [Execução: YYYY] (página X)
 3. Crime anterior: [transcreva EXATAMENTE como consta] (página X)
 4. Data do fato do crime anterior: [dd/mm/aaaa] (página X)
@@ -407,7 +715,8 @@ Para cada condenação válida (analisando processo original + execução em con
 REGRAS DE EXTRAÇÃO:
 - Analise processo original + execução como UM CASO
 - Se não encontrar "Trânsito em julgado para a Defesa": NÃO inclua
-- Para extinções: Verifique se houve condenação anterior válida - se sim, INCLUA
+- Para extinções: Verifique se houve condenação anterior válida - se sim, INCLUA na análise
+- Informações distribuídas: Combine dados de ambas as seções do mesmo caso
 - Sempre cite ambos os números de processo para rastreabilidade
 - Cite a página onde encontrou cada informação
 
@@ -434,8 +743,8 @@ SEMPRE CALCULE:
 4. Extinção da pena: [data encontrada ou "não consta"]
 
 FÓRMULAS OBRIGATÓRIAS:
-- REINCIDÊNCIA = (Fato < Crime atual) E (Trânsito < Crime atual) E (Extinção = "não consta" OU < 5 anos)
-- MAUS ANTECEDENTES = (Fato < Crime atual) E (Trânsito anterior OU posterior) E (Extinção > 5 anos OU sem extinção, sem reincidência)
+- REINCIDÊNCIA = (Fato < Crime atual) E (Trânsito < Crime atual) E (Extinção = "não consta" OU Extinção há menos de 5 anos)
+- MAUS ANTECEDENTES = (Fato < Crime atual) E (Trânsito pode ser anterior OU posterior) E (Extinção há mais de 5 anos OU sem extinção, mas sem reincidência)
 - NENHUM DOS INSTITUTOS = (Fato > Crime atual)
 
 ATENÇÃO: Mesmo com extinção por indulto, se houve condenação válida anterior, INCLUA na análise.
@@ -448,32 +757,32 @@ CÁLCULOS:
 
 FORMATO DE SAÍDA OBRIGATÓRIO:
 
-### RESUMO EXECUTIVO:
+### RESUMO EXECUTIVO
 [3 linhas sobre o resultado da análise]
 
-### TABELA RESUMO DOS RESULTADOS:
+### TABELA RESUMO DOS RESULTADOS
 | Nº | Processo Original | Crime | Data do Fato | Trânsito p/ Defesa | Classificação |
 |----|-------------------|-------|--------------|-------------------|---------------|
-| 1  | [número]          | [crime] | [dd/mm/aaaa] | [dd/mm/aaaa]  | [Reincidência/Maus Antecedentes/Nenhum] |
+| 1  | [número] | [crime] | [dd/mm/aaaa] | [dd/mm/aaaa] | [Reincidência/Maus Antecedentes/Nenhum] |
 
-### CONDENAÇÕES VÁLIDAS IDENTIFICADAS:
+### CONDENAÇÕES VÁLIDAS IDENTIFICADAS
 [ORDENE POR ORDEM DE APARIÇÃO NA CERTIDÃO]
 [N]ª CONDENAÇÃO: [todas as informações extraídas]
 
-### PROCESSOS EXCLUÍDOS DA ANÁLISE:
+### PROCESSOS EXCLUÍDOS DA ANÁLISE
 PROCESSO EXCLUÍDO [N]:
 - Número do processo: [número] (página X)
 - Tipo de decisão: [tipo]
 - Motivo da exclusão: [explicação específica]
 - Data: [se disponível]
 
-### CLASSIFICAÇÃO FINAL:
+### CLASSIFICAÇÃO FINAL
 - Total de condenações válidas: [X]
 - Reincidência: [X] condenação(ões)
 - Maus antecedentes: [X] condenação(ões)
 - Nenhum dos institutos: [X] condenação(ões)
 
-### RECOMENDAÇÕES:
+### RECOMENDAÇÕES
 [Orientações específicas para o caso]
 
 ---
@@ -495,58 +804,263 @@ AUTO-VERIFICAÇÃO OBRIGATÓRIA — confirme antes de entregar:
 
 Se encontrar inconsistências ou não conseguir conectar informações entre processo original e execução, PARE e solicite esclarecimento.`;
 
-  // ── Renderiza prompt ──────────────────────────────────────────────────────
-  document.getElementById('promptArea').textContent = PROMPT;
+/* ── Estado ─────────────────────────────────────────────── */
+let currentFile = null;
+let rawResult   = '';
 
-  // ── Gera mensagem conforme data ───────────────────────────────────────────
-  function formatarData(iso) {
-    if (!iso) return null;
-    const [y, m, d] = iso.split('-');
-    return `${d}/${m}/${y}`;
+/* ── Init ───────────────────────────────────────────────── */
+document.addEventListener('DOMContentLoaded', () => {
+  if (!localStorage.getItem('juscrim_key')) {
+    document.getElementById('modalFirst').classList.remove('hidden');  // já visível por padrão
+  } else {
+    document.getElementById('modalFirst').classList.add('hidden');
   }
+  setupDropzone();
+  setupUI();
+});
 
-  function atualizarMensagem() {
-    const val = document.getElementById('dataCrime').value;
-    const preview = document.getElementById('msgPreview');
-    if (!val) {
-      preview.textContent = 'Preencha a data acima para gerar a mensagem.';
-      return;
+/* ── UI wiring ──────────────────────────────────────────── */
+function setupUI() {
+  // Date change
+  document.getElementById('dataCrime').addEventListener('input', syncBtn);
+
+  // Analyze
+  document.getElementById('btnAnalyze').addEventListener('click', runAnalysis);
+
+  // New analysis
+  document.getElementById('btnNew').addEventListener('click', resetToForm);
+
+  // Copy result
+  document.getElementById('btnCopy').addEventListener('click', () => {
+    navigator.clipboard.writeText(rawResult).then(() => toast('✅ Resultado copiado!'));
+  });
+
+  // Settings open/close/save
+  document.getElementById('btnSettings').addEventListener('click', openSettings);
+  document.getElementById('btnSettingsCancel').addEventListener('click', () =>
+    document.getElementById('modalSettings').classList.add('hidden'));
+  document.getElementById('btnSettingsSave').addEventListener('click', saveSettings);
+
+  // First-run save
+  document.getElementById('btnFirstSave').addEventListener('click', saveFirstKey);
+
+  // Password toggles
+  document.querySelectorAll('.toggle-pw').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const input = document.getElementById(btn.dataset.target);
+      input.type = input.type === 'password' ? 'text' : 'password';
+      btn.textContent = input.type === 'password' ? '👁' : '🙈';
+    });
+  });
+
+  // Remove file
+  document.getElementById('btnRemove').addEventListener('click', removeFile);
+}
+
+/* ── API key ────────────────────────────────────────────── */
+function saveFirstKey() {
+  const key = document.getElementById('firstKey').value.trim();
+  if (!key.startsWith('sk-')) { toast('⚠️ Chave inválida — deve começar com "sk-"'); return; }
+  localStorage.setItem('juscrim_key', key);
+  document.getElementById('modalFirst').classList.add('hidden');
+  toast('✅ Chave salva!');
+}
+
+function openSettings() {
+  document.getElementById('settingsKey').value = localStorage.getItem('juscrim_key') || '';
+  document.getElementById('modalSettings').classList.remove('hidden');
+}
+
+function saveSettings() {
+  const key = document.getElementById('settingsKey').value.trim();
+  if (key) { localStorage.setItem('juscrim_key', key); toast('✅ Chave atualizada!'); }
+  document.getElementById('modalSettings').classList.add('hidden');
+}
+
+/* ── Dropzone ───────────────────────────────────────────── */
+function setupDropzone() {
+  const dz = document.getElementById('dropzone');
+  const fi = document.getElementById('fileInput');
+
+  dz.addEventListener('dragover',  e => { e.preventDefault(); dz.classList.add('drag-over'); });
+  dz.addEventListener('dragleave', ()  => dz.classList.remove('drag-over'));
+  dz.addEventListener('drop', e => {
+    e.preventDefault();
+    dz.classList.remove('drag-over');
+    if (e.dataTransfer.files[0]) setFile(e.dataTransfer.files[0]);
+  });
+  fi.addEventListener('change', () => { if (fi.files[0]) setFile(fi.files[0]); });
+}
+
+function setFile(file) {
+  const ok = file.type === 'application/pdf' || file.name.endsWith('.pdf') || file.name.endsWith('.txt');
+  if (!ok)             { toast('⚠️ Use PDF ou TXT'); return; }
+  if (file.size > 30 * 1024 * 1024) { toast('⚠️ Arquivo muito grande (máx. 30 MB)'); return; }
+
+  currentFile = file;
+  document.getElementById('dropzone').classList.add('hidden');
+  document.getElementById('fileChip').classList.remove('hidden');
+  document.getElementById('chipName').textContent = file.name;
+  document.getElementById('chipSize').textContent = fmtBytes(file.size);
+  syncBtn();
+}
+
+function removeFile() {
+  currentFile = null;
+  document.getElementById('fileInput').value = '';
+  document.getElementById('fileChip').classList.add('hidden');
+  document.getElementById('dropzone').classList.remove('hidden');
+  syncBtn();
+}
+
+function syncBtn() {
+  const ok = !!document.getElementById('dataCrime').value && !!currentFile;
+  document.getElementById('btnAnalyze').disabled = !ok;
+}
+
+function fmtBytes(b) {
+  if (b < 1024)       return b + ' B';
+  if (b < 1024*1024)  return (b/1024).toFixed(1) + ' KB';
+  return (b/(1024*1024)).toFixed(1) + ' MB';
+}
+
+/* ── Analysis ───────────────────────────────────────────── */
+async function runAnalysis() {
+  const key = localStorage.getItem('juscrim_key');
+  if (!key) { openSettings(); return; }
+
+  const isoDate = document.getElementById('dataCrime').value;
+  const [y, m, d] = isoDate.split('-');
+  const date = `${d}/${m}/${y}`;
+
+  show('viewLoading');
+
+  try {
+    let content;
+
+    if (currentFile.type === 'application/pdf' || currentFile.name.endsWith('.pdf')) {
+      const b64 = await toBase64(currentFile);
+      content = [
+        { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: b64 } },
+        { type: 'text', text: `Data do fato do crime atual: ${date}` }
+      ];
+    } else {
+      const txt = await toText(currentFile);
+      content = [{ type: 'text', text: `Data do fato do crime atual: ${date}\n\nCertidão de Antecedentes:\n\n${txt}` }];
     }
-    const data = formatarData(val);
-    preview.textContent =
-`Data do fato do crime atual: ${data}
 
-[Anexe aqui o PDF da certidão de antecedentes do TJSP]`;
+    rawResult = '';
+    show('viewResult');
+    document.getElementById('mdResult').innerHTML = '<span class="cursor"></span>';
+
+    await stream(key, content);
+
+  } catch (err) {
+    show('viewForm');
+    toast('❌ Erro: ' + err.message);
+  }
+}
+
+async function stream(apiKey, content) {
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 8192,
+      stream: true,
+      system: SYSTEM_PROMPT,
+      messages: [{ role: 'user', content }]
+    })
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error?.message || `HTTP ${res.status}`);
   }
 
-  document.getElementById('dataCrime').addEventListener('input', atualizarMensagem);
+  const reader  = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+  let renderPending = false;
 
-  // ── Copiar mensagem ───────────────────────────────────────────────────────
-  function copiarMensagem() {
-    const val = document.getElementById('dataCrime').value;
-    if (!val) { showToast('⚠️ Informe a data primeiro'); return; }
-    const data = formatarData(val);
-    const texto = `Data do fato do crime atual: ${data}\n\n[Anexe aqui o PDF da certidão de antecedentes do TJSP]`;
-    navigator.clipboard.writeText(texto).then(() => showToast('✅ Mensagem copiada!'));
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split('\n');
+    buffer = lines.pop();
+
+    for (const line of lines) {
+      if (!line.startsWith('data: ')) continue;
+      const data = line.slice(6).trim();
+      if (!data || data === '[DONE]') continue;
+      try {
+        const ev = JSON.parse(data);
+        if (ev.type === 'content_block_delta' && ev.delta?.type === 'text_delta') {
+          rawResult += ev.delta.text;
+          if (!renderPending) {
+            renderPending = true;
+            requestAnimationFrame(() => {
+              renderPending = false;
+              document.getElementById('mdResult').innerHTML =
+                marked.parse(rawResult) + '<span class="cursor"></span>';
+            });
+          }
+        }
+      } catch {}
+    }
   }
 
-  // ── Copiar prompt ─────────────────────────────────────────────────────────
-  function copiarPrompt() {
-    navigator.clipboard.writeText(PROMPT).then(() => showToast('✅ Prompt copiado!'));
-  }
+  // Final render — no cursor
+  document.getElementById('mdResult').innerHTML = marked.parse(rawResult);
+}
 
-  // ── Abrir Claude ──────────────────────────────────────────────────────────
-  function abrirClaude() {
-    window.open('https://claude.ai', '_blank');
-  }
+/* ── View helpers ───────────────────────────────────────── */
+function show(id) {
+  ['viewForm','viewLoading','viewResult'].forEach(v =>
+    document.getElementById(v).classList.toggle('hidden', v !== id));
+}
 
-  // ── Toast ─────────────────────────────────────────────────────────────────
-  function showToast(msg) {
-    const t = document.getElementById('toast');
-    t.textContent = msg;
-    t.classList.add('show');
-    setTimeout(() => t.classList.remove('show'), 2500);
-  }
+function resetToForm() {
+  rawResult = '';
+  removeFile();
+  document.getElementById('dataCrime').value = '';
+  syncBtn();
+  show('viewForm');
+}
+
+/* ── Utils ──────────────────────────────────────────────── */
+function toBase64(file) {
+  return new Promise((ok, err) => {
+    const r = new FileReader();
+    r.onload  = e => ok(e.target.result.split(',')[1]);
+    r.onerror = err;
+    r.readAsDataURL(file);
+  });
+}
+
+function toText(file) {
+  return new Promise((ok, err) => {
+    const r = new FileReader();
+    r.onload  = e => ok(e.target.result);
+    r.onerror = err;
+    r.readAsText(file, 'utf-8');
+  });
+}
+
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
 </script>
 </body>
 </html>
