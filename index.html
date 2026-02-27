@@ -434,6 +434,14 @@
     .modal .desc a { color: var(--primary); text-decoration: none; }
     .modal .desc a:hover { text-decoration: underline; }
 
+    .modal-label {
+      font-size: .78rem; font-weight: 600; color: var(--text-2);
+      display: block; margin-bottom: 6px;
+    }
+    .modal-label-note {
+      font-weight: 400; color: var(--text-3);
+    }
+
     .input-wrap { position: relative; margin-bottom: 16px; }
     .input-wrap input {
       width: 100%;
@@ -443,9 +451,10 @@
       font-size: 0.88rem;
       outline: none;
       transition: border-color .15s, box-shadow .15s;
-      font-family: monospace;
+      font-family: inherit;
       color: var(--text);
     }
+    .input-wrap input.mono { font-family: monospace; }
     .input-wrap input:focus {
       border-color: var(--primary);
       box-shadow: 0 0 0 3px rgba(79,70,229,.1);
@@ -514,8 +523,8 @@
     <span class="pill pill-red">Uso Judicial</span>
     <span class="lock-badge locked" id="lockBadge" title="Estado da sessão">🔒 Bloqueado</span>
     <span class="pill user-pill hidden" id="userBadge" title="Usuário autenticado">👤 <span id="userLabel"></span></span>
-    <button class="icon-btn hidden" id="btnLogout" title="Sair da conta">🚪</button>
-    <button class="icon-btn" id="btnSettings" title="Configurações">⚙️</button>
+    <button class="icon-btn hidden" id="btnLogout" title="Encerrar sessão">🚪</button>
+    <button class="icon-btn hidden" id="btnSettings" title="Configurações (admin)">⚙️</button>
   </div>
 </header>
 
@@ -596,47 +605,39 @@
     <div class="modal-icon">🔑</div>
     <h2>Acesso ao sistema</h2>
     <p class="desc">Insira suas credenciais para acessar o <strong>JusCrim-FA</strong>.<br>Sistema restrito a uso exclusivamente judicial.</p>
-    <label style="font-size:.78rem;font-weight:600;color:var(--text-2);display:block;margin-bottom:6px;">Usuário</label>
+    <label class="modal-label">Usuário</label>
     <div class="input-wrap">
-      <input type="text" id="loginUser" placeholder="nome de usuário" autocomplete="username"
-             style="font-family:inherit;" />
+      <input type="text" id="loginUser" placeholder="nome de usuário" autocomplete="username" />
     </div>
-    <label style="font-size:.78rem;font-weight:600;color:var(--text-2);display:block;margin-bottom:6px;">Senha</label>
+    <label class="modal-label">Senha</label>
     <div class="input-wrap" style="margin-bottom:0">
       <input type="password" id="loginPass" placeholder="senha" autocomplete="current-password" />
       <button class="toggle-pw" data-target="loginPass">👁</button>
     </div>
-    <div id="loginError" style="font-size:.78rem;color:var(--red);margin-top:8px;margin-bottom:4px;display:none;">Usuário ou senha incorretos. Tente novamente.</div>
+    <div id="loginError" style="font-size:.78rem;color:var(--red);margin-top:8px;margin-bottom:4px;display:none;">
+      Usuário ou senha incorretos. Tente novamente.
+    </div>
     <div class="modal-footer" style="margin-top:18px;">
       <button class="btn-sm pri" id="btnLogin">Entrar →</button>
     </div>
   </div>
 </div>
 
-<!-- ══ MODAL: CONFIGURAÇÃO INICIAL ══════════════════════════ -->
+<!-- ══ MODAL: CONFIGURAR CHAVE API (admin) ═════════════════ -->
 <div class="overlay hidden" id="modalSetup">
   <div class="modal">
     <div class="modal-icon">🔐</div>
-    <h2>Configuração inicial</h2>
+    <h2>Configurar chave API</h2>
     <p class="desc">
-      Sua chave será <strong>criptografada com AES-256</strong> antes de ser salva.<br>
-      Defina um PIN para protegê-la. O PIN é exigido a cada sessão.<br><br>
+      Insira sua chave da API Anthropic. Ela será
+      <strong>criptografada automaticamente</strong> antes de ser armazenada —
+      os assistentes não terão acesso a ela.<br><br>
       Obtenha sua chave em <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a>.
     </p>
-    <label style="font-size:.78rem;font-weight:600;color:var(--text-2);display:block;margin-bottom:6px;">Chave da API Anthropic</label>
-    <div class="input-wrap">
-      <input type="password" id="setupKey" placeholder="sk-ant-..." spellcheck="false" autocomplete="off" />
-      <button class="toggle-pw" data-target="setupKey">👁</button>
-    </div>
-    <label style="font-size:.78rem;font-weight:600;color:var(--text-2);display:block;margin-bottom:6px;">PIN de proteção</label>
-    <div class="input-wrap">
-      <input type="password" id="setupPin" placeholder="mínimo 4 caracteres" autocomplete="new-password" maxlength="32" />
-      <button class="toggle-pw" data-target="setupPin">👁</button>
-    </div>
-    <label style="font-size:.78rem;font-weight:600;color:var(--text-2);display:block;margin-bottom:6px;">Confirmar PIN</label>
+    <label class="modal-label">Chave da API Anthropic</label>
     <div class="input-wrap" style="margin-bottom:0">
-      <input type="password" id="setupPinConfirm" placeholder="repita o PIN" autocomplete="new-password" maxlength="32" />
-      <button class="toggle-pw" data-target="setupPinConfirm">👁</button>
+      <input type="password" id="setupKey" placeholder="sk-ant-..." spellcheck="false" autocomplete="off" class="mono" />
+      <button class="toggle-pw" data-target="setupKey">👁</button>
     </div>
     <div class="modal-footer" style="margin-top:18px;">
       <button class="btn-sm pri" id="btnSetupSave">Criptografar e salvar →</button>
@@ -644,48 +645,29 @@
   </div>
 </div>
 
-<!-- ══ MODAL: DESBLOQUEAR ════════════════════════════════════ -->
-<div class="overlay hidden" id="modalUnlock">
-  <div class="modal">
-    <div class="modal-icon">🔒</div>
-    <h2>Desbloquear sessão</h2>
-    <p class="desc">Insira seu PIN para descriptografar a chave de API e iniciar a sessão.</p>
-    <div class="input-wrap">
-      <input type="password" id="unlockPin" placeholder="PIN" autocomplete="current-password" maxlength="32" />
-      <button class="toggle-pw" data-target="unlockPin">👁</button>
-    </div>
-    <div id="unlockError" style="font-size:.78rem;color:var(--red);margin-top:-8px;margin-bottom:10px;display:none;">PIN incorreto. Tente novamente.</div>
-    <div class="modal-footer">
-      <button class="btn-sm" id="btnUnlockReset" style="color:var(--red);">Redefinir chave</button>
-      <button class="btn-sm pri" id="btnUnlock">Desbloquear →</button>
-    </div>
-  </div>
-</div>
-
-<!-- ══ MODAL: CONFIGURAÇÕES ════════════════════════════════ -->
+<!-- ══ MODAL: CONFIGURAÇÕES (admin) ════════════════════════ -->
 <div class="overlay hidden" id="modalSettings">
   <div class="modal">
     <div class="modal-icon">⚙️</div>
     <h2>Configurações</h2>
-    <p class="desc">Altere a chave de API ou o PIN. Informe o PIN atual para autenticar.</p>
-    <label style="font-size:.78rem;font-weight:600;color:var(--text-2);display:block;margin-bottom:6px;">PIN atual</label>
+    <p class="desc">Confirme sua senha para salvar alterações.</p>
+    <label class="modal-label">Sua senha (confirmação)</label>
     <div class="input-wrap">
-      <input type="password" id="settingsCurrPin" placeholder="PIN atual" autocomplete="current-password" maxlength="32" />
-      <button class="toggle-pw" data-target="settingsCurrPin">👁</button>
+      <input type="password" id="settingsAdminPass" placeholder="sua senha" autocomplete="current-password" />
+      <button class="toggle-pw" data-target="settingsAdminPass">👁</button>
     </div>
-    <label style="font-size:.78rem;font-weight:600;color:var(--text-2);display:block;margin-bottom:6px;">Nova chave de API <span style="font-weight:400;color:var(--text-3)">(deixe em branco para manter)</span></label>
-    <div class="input-wrap">
-      <input type="password" id="settingsNewKey" placeholder="sk-ant-..." spellcheck="false" autocomplete="off" />
-      <button class="toggle-pw" data-target="settingsNewKey">👁</button>
-    </div>
-    <label style="font-size:.78rem;font-weight:600;color:var(--text-2);display:block;margin-bottom:6px;">Novo PIN <span style="font-weight:400;color:var(--text-3)">(deixe em branco para manter)</span></label>
+    <label class="modal-label">
+      Nova chave de API
+      <span class="modal-label-note">(deixe em branco para manter a atual)</span>
+    </label>
     <div class="input-wrap" style="margin-bottom:0">
-      <input type="password" id="settingsNewPin" placeholder="novo PIN" autocomplete="new-password" maxlength="32" />
-      <button class="toggle-pw" data-target="settingsNewPin">👁</button>
+      <input type="password" id="settingsNewKey" placeholder="sk-ant-..." spellcheck="false" autocomplete="off" class="mono" />
+      <button class="toggle-pw" data-target="settingsNewKey">👁</button>
     </div>
     <div id="settingsError" style="font-size:.78rem;color:var(--red);margin-top:8px;display:none;"></div>
     <div class="modal-footer" style="margin-top:18px;">
       <button class="btn-sm" id="btnSettingsCancel">Cancelar</button>
+      <button class="btn-sm" id="btnResetKey" style="color:var(--red);">Redefinir chave</button>
       <button class="btn-sm pri" id="btnSettingsSave">Salvar</button>
     </div>
   </div>
@@ -888,31 +870,35 @@ Se encontrar inconsistências ou não conseguir conectar informações entre pro
 /* ══════════════════════════════════════════════════════════
    CONFIGURAÇÃO DE USUÁRIOS
    ──────────────────────────────────────────────────────────
-   Para adicionar ou alterar usuários, edite a lista abaixo.
-   O campo "h" é o hash SHA-256 da senha.
+   admin: true  → acesso às configurações (pode ver/alterar chave API)
+   admin: false → apenas uso da ferramenta (nunca vê a chave API)
 
-   Como gerar o hash de uma nova senha:
-   1. Abra o console do navegador (F12 → Console)
-   2. Cole o comando abaixo substituindo SUASENHA:
-      crypto.subtle.digest('SHA-256', new TextEncoder().encode('SUASENHA'))
-        .then(b => console.log([...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')))
-   3. Copie o resultado e cole no campo "h" abaixo.
+   Para gerar o hash SHA-256 de uma senha, abra o console (F12) e execute:
+   crypto.subtle.digest('SHA-256', new TextEncoder().encode('SUASENHA'))
+     .then(b => console.log([...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')))
 
-   Credenciais iniciais: admin / admin
+   Credencial inicial do admin: admin / admin
    ══════════════════════════════════════════════════════════ */
 const USERS = [
-  { u: 'admin', h: '8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918' }, // senha: admin
-  // { u: 'juiz1', h: 'HASH_SHA256_AQUI' }, // adicione mais usuários aqui
+  { u: 'admin', h: '8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918', admin: true },
+  // Adicione assistentes abaixo (admin: false):
+  // { u: 'assistente1', h: 'HASH_SHA256_AQUI', admin: false },
+  // { u: 'assistente2', h: 'HASH_SHA256_AQUI', admin: false },
 ];
 
 /* ── Estado ─────────────────────────────────────────────── */
-let currentFile  = null;
-let rawResult    = '';
-let sessionKey   = null;   // chave API em memória (nunca gravada em disco)
-let loggedUser   = null;   // usuário autenticado (só memória)
+let currentFile = null;
+let rawResult   = '';
+let sessionKey  = null;  // chave API em memória
+let loggedUser  = null;  // usuário autenticado
+let isAdmin     = false; // se o usuário tem papel de admin
 
-/* ── Crypto (Web Crypto API) ─────────────────────────────── */
-const STORAGE_KEY = 'juscrim_enc';
+/* ── Crypto ──────────────────────────────────────────────── */
+const STORAGE_KEY    = 'juscrim_enc';
+// Passphrase fixa usada para criptografia automática da chave API.
+// A chave fica protegida em localStorage (ilegível sem este código),
+// mas não é exibida em nenhuma interface — os assistentes não têm acesso.
+const AUTO_PASSPHRASE = 'JsCrFa-auto-2026-k9m3';
 
 function b64(buf) {
   return btoa(String.fromCharCode(...new Uint8Array(buf)));
@@ -921,11 +907,11 @@ function unb64(s) {
   return Uint8Array.from(atob(s), c => c.charCodeAt(0));
 }
 
-async function deriveKey(pin, salt) {
-  const enc = new TextEncoder();
-  const km  = await crypto.subtle.importKey('raw', enc.encode(pin), 'PBKDF2', false, ['deriveKey']);
+async function deriveKey(passphrase, salt) {
+  const km = await crypto.subtle.importKey(
+    'raw', new TextEncoder().encode(passphrase), 'PBKDF2', false, ['deriveKey']);
   return crypto.subtle.deriveKey(
-    { name: 'PBKDF2', salt, iterations: 200000, hash: 'SHA-256' },
+    { name: 'PBKDF2', salt, iterations: 100000, hash: 'SHA-256' },
     km,
     { name: 'AES-GCM', length: 256 },
     false,
@@ -933,43 +919,56 @@ async function deriveKey(pin, salt) {
   );
 }
 
-async function encryptApiKey(apiKey, pin) {
-  const salt       = crypto.getRandomValues(new Uint8Array(16));
-  const iv         = crypto.getRandomValues(new Uint8Array(12));
-  const key        = await deriveKey(pin, salt);
-  const ciphertext = await crypto.subtle.encrypt(
-    { name: 'AES-GCM', iv },
-    key,
-    new TextEncoder().encode(apiKey)
-  );
-  return JSON.stringify({ c: b64(ciphertext), i: b64(iv), s: b64(salt) });
+async function autoEncrypt(apiKey) {
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const iv   = crypto.getRandomValues(new Uint8Array(12));
+  const key  = await deriveKey(AUTO_PASSPHRASE, salt);
+  const ct   = await crypto.subtle.encrypt(
+    { name: 'AES-GCM', iv }, key, new TextEncoder().encode(apiKey));
+  return JSON.stringify({ c: b64(ct), i: b64(iv), s: b64(salt) });
 }
 
-async function decryptApiKey(stored, pin) {
+async function autoDecrypt(stored) {
   const { c, i, s } = JSON.parse(stored);
-  const key = await deriveKey(pin, unb64(s));
+  const key = await deriveKey(AUTO_PASSPHRASE, unb64(s));
   try {
     const plain = await crypto.subtle.decrypt(
-      { name: 'AES-GCM', iv: unb64(i) },
-      key,
-      unb64(c)
-    );
+      { name: 'AES-GCM', iv: unb64(i) }, key, unb64(c));
     return new TextDecoder().decode(plain);
   } catch {
-    throw new Error('PIN incorreto');
+    throw new Error('Formato de chave incompatível. Reconfigure.');
   }
 }
 
-/* ── SHA-256 (para autenticação de usuários) ─────────────── */
 async function sha256(str) {
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
   return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-/* ── Login de usuário ────────────────────────────────────── */
+/* ── Init ───────────────────────────────────────────────── */
+document.addEventListener('DOMContentLoaded', () => {
+  setupDropzone();
+  setupUI();
+  show_modal('modalLogin');
+  document.getElementById('loginUser').focus();
+});
+
+function show_modal(id) {
+  ['modalLogin', 'modalSetup', 'modalSettings'].forEach(m =>
+    document.getElementById(m).classList.toggle('hidden', m !== id));
+}
+
+function setSessionKey(key) {
+  sessionKey = key;
+  const b = document.getElementById('lockBadge');
+  b.textContent = '🔓 Sessão ativa';
+  b.className = 'lock-badge unlocked';
+}
+
+/* ── Login ──────────────────────────────────────────────── */
 async function doLogin() {
-  const u = document.getElementById('loginUser').value.trim().toLowerCase();
-  const p = document.getElementById('loginPass').value;
+  const u     = document.getElementById('loginUser').value.trim().toLowerCase();
+  const p     = document.getElementById('loginPass').value;
   const errEl = document.getElementById('loginError');
   errEl.style.display = 'none';
 
@@ -991,16 +990,38 @@ async function doLogin() {
     }
 
     // Login bem-sucedido
-    setLoggedUser(user.u);
+    setLoggedUser(user.u, !!user.admin);
     document.getElementById('loginUser').value = '';
     document.getElementById('loginPass').value = '';
 
-    // Fluxo da chave de API
+    // Carregar chave API automaticamente
     const stored = localStorage.getItem(STORAGE_KEY);
     if (!stored) {
-      show_modal('modalSetup');
+      if (user.admin) {
+        // Admin precisa configurar a chave pela primeira vez
+        show_modal('modalSetup');
+      } else {
+        show_modal('');
+        toast('⚠️ Chave API não configurada. Contate o administrador.');
+      }
     } else {
-      show_modal('modalUnlock');
+      try {
+        const apiKey = await autoDecrypt(stored);
+        setSessionKey(apiKey);
+        show_modal('');
+        toast('✅ Sessão iniciada!');
+      } catch (err) {
+        // Chave pode estar em formato antigo (criptografada com PIN)
+        show_modal('');
+        if (user.admin) {
+          if (confirm('Erro ao carregar a chave API. Isso pode ocorrer se ela foi configurada com o sistema anterior (PIN). Deseja reconfigurar agora?')) {
+            localStorage.removeItem(STORAGE_KEY);
+            show_modal('modalSetup');
+          }
+        } else {
+          toast('⚠️ Erro ao carregar chave. Contate o administrador.');
+        }
+      }
     }
   } catch (err) {
     toast('❌ Erro: ' + err.message);
@@ -1008,81 +1029,59 @@ async function doLogin() {
   btn.disabled = false; btn.textContent = 'Entrar →';
 }
 
-function setLoggedUser(name) {
+function setLoggedUser(name, admin) {
   loggedUser = name;
+  isAdmin    = admin;
   document.getElementById('userLabel').textContent = name;
   document.getElementById('userBadge').classList.remove('hidden');
   document.getElementById('btnLogout').classList.remove('hidden');
+  // Botão de configurações: apenas admin
+  document.getElementById('btnSettings').classList.toggle('hidden', !admin);
 }
 
 function doLogout() {
   if (!confirm('Deseja encerrar a sessão?')) return;
   loggedUser = null;
   sessionKey = null;
+  isAdmin    = false;
   document.getElementById('userBadge').classList.add('hidden');
   document.getElementById('btnLogout').classList.add('hidden');
+  document.getElementById('btnSettings').classList.add('hidden');
   const b = document.getElementById('lockBadge');
   b.textContent = '🔒 Bloqueado';
-  b.className = 'lock-badge locked';
+  b.className   = 'lock-badge locked';
   show_modal('modalLogin');
   document.getElementById('loginError').style.display = 'none';
-}
-
-/* ── Init ───────────────────────────────────────────────── */
-document.addEventListener('DOMContentLoaded', () => {
-  setupDropzone();
-  setupUI();
-  // Sempre inicia pelo login de usuário
-  show_modal('modalLogin');
-  document.getElementById('loginUser').focus();
-});
-
-function show_modal(id) {
-  ['modalLogin','modalSetup','modalUnlock','modalSettings'].forEach(m =>
-    document.getElementById(m).classList.toggle('hidden', m !== id));
-}
-
-function setSessionKey(key) {
-  sessionKey = key;
-  const b = document.getElementById('lockBadge');
-  b.textContent = '🔓 Sessão ativa';
-  b.className = 'lock-badge unlocked';
 }
 
 /* ── UI wiring ──────────────────────────────────────────── */
 function setupUI() {
   // Login / logout
   document.getElementById('btnLogin').addEventListener('click', doLogin);
-  document.getElementById('loginUser').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('loginPass').focus(); });
-  document.getElementById('loginPass').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+  document.getElementById('loginUser').addEventListener('keydown',
+    e => { if (e.key === 'Enter') document.getElementById('loginPass').focus(); });
+  document.getElementById('loginPass').addEventListener('keydown',
+    e => { if (e.key === 'Enter') doLogin(); });
   document.getElementById('btnLogout').addEventListener('click', doLogout);
 
+  // Main form
   document.getElementById('dataCrime').addEventListener('input', syncBtn);
   document.getElementById('btnAnalyze').addEventListener('click', runAnalysis);
   document.getElementById('btnNew').addEventListener('click', resetToForm);
   document.getElementById('btnCopy').addEventListener('click', () =>
     navigator.clipboard.writeText(rawResult).then(() => toast('✅ Resultado copiado!')));
 
-  // Setup
+  // Setup (configuração inicial da chave)
   document.getElementById('btnSetupSave').addEventListener('click', doSetup);
-  document.getElementById('setupPin').addEventListener('keydown', e => { if (e.key==='Enter') document.getElementById('setupPinConfirm').focus(); });
-  document.getElementById('setupPinConfirm').addEventListener('keydown', e => { if (e.key==='Enter') doSetup(); });
-
-  // Unlock
-  document.getElementById('btnUnlock').addEventListener('click', doUnlock);
-  document.getElementById('unlockPin').addEventListener('keydown', e => { if (e.key==='Enter') doUnlock(); });
-  document.getElementById('btnUnlockReset').addEventListener('click', () => {
-    if (!confirm('Remover a chave salva e configurar novamente?')) return;
-    localStorage.removeItem(STORAGE_KEY);
-    sessionKey = null;
-    show_modal('modalSetup');
-  });
+  document.getElementById('setupKey').addEventListener('keydown',
+    e => { if (e.key === 'Enter') doSetup(); });
 
   // Settings
   document.getElementById('btnSettings').addEventListener('click', openSettings);
   document.getElementById('btnSettingsCancel').addEventListener('click', () =>
     document.getElementById('modalSettings').classList.add('hidden'));
   document.getElementById('btnSettingsSave').addEventListener('click', doSettingsSave);
+  document.getElementById('btnResetKey').addEventListener('click', doResetKey);
 
   // Remove file
   document.getElementById('btnRemove').addEventListener('click', removeFile);
@@ -1096,91 +1095,62 @@ function setupUI() {
     }));
 }
 
-/* ── Configuração inicial ────────────────────────────────── */
+/* ── Configuração inicial da chave API ───────────────────── */
 async function doSetup() {
-  const apiKey  = document.getElementById('setupKey').value.trim();
-  const pin     = document.getElementById('setupPin').value;
-  const pinConf = document.getElementById('setupPinConfirm').value;
-
-  if (!apiKey.startsWith('sk-'))     { toast('⚠️ Chave inválida — deve começar com "sk-"'); return; }
-  if (pin.length < 4)                { toast('⚠️ PIN deve ter pelo menos 4 caracteres'); return; }
-  if (pin !== pinConf)               { toast('⚠️ PINs não coincidem'); return; }
+  const apiKey = document.getElementById('setupKey').value.trim();
+  if (!apiKey.startsWith('sk-')) { toast('⚠️ Chave inválida — deve começar com "sk-"'); return; }
 
   const btn = document.getElementById('btnSetupSave');
   btn.disabled = true; btn.textContent = 'Criptografando...';
   try {
-    const enc = await encryptApiKey(apiKey, pin);
+    const enc = await autoEncrypt(apiKey);
     localStorage.setItem(STORAGE_KEY, enc);
     setSessionKey(apiKey);
-    show_modal('');  // fecha todos
-    document.getElementById('modalSetup').classList.add('hidden');
+    show_modal('');
     toast('✅ Chave criptografada e salva!');
-    // limpa campos
-    ['setupKey','setupPin','setupPinConfirm'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('setupKey').value = '';
   } catch (err) {
     toast('❌ Erro: ' + err.message);
   }
   btn.disabled = false; btn.textContent = 'Criptografar e salvar →';
 }
 
-/* ── Desbloquear ─────────────────────────────────────────── */
-async function doUnlock() {
-  const pin = document.getElementById('unlockPin').value;
-  const errEl = document.getElementById('unlockError');
-  errEl.style.display = 'none';
-
-  const btn = document.getElementById('btnUnlock');
-  btn.disabled = true; btn.textContent = 'Verificando...';
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    const apiKey = await decryptApiKey(stored, pin);
-    setSessionKey(apiKey);
-    document.getElementById('modalUnlock').classList.add('hidden');
-    document.getElementById('unlockPin').value = '';
-    toast('✅ Sessão desbloqueada!');
-  } catch {
-    errEl.style.display = 'block';
-    document.getElementById('unlockPin').value = '';
-    document.getElementById('unlockPin').focus();
-  }
-  btn.disabled = false; btn.textContent = 'Desbloquear →';
-}
-
-/* ── Configurações ───────────────────────────────────────── */
+/* ── Configurações (admin) ───────────────────────────────── */
 function openSettings() {
-  ['settingsCurrPin','settingsNewKey','settingsNewPin'].forEach(id =>
+  ['settingsAdminPass', 'settingsNewKey'].forEach(id =>
     document.getElementById(id).value = '');
   document.getElementById('settingsError').style.display = 'none';
   document.getElementById('modalSettings').classList.remove('hidden');
 }
 
 async function doSettingsSave() {
-  const currPin = document.getElementById('settingsCurrPin').value;
-  const newKey  = document.getElementById('settingsNewKey').value.trim();
-  const newPin  = document.getElementById('settingsNewPin').value;
-  const errEl   = document.getElementById('settingsError');
+  const adminPass = document.getElementById('settingsAdminPass').value;
+  const newKey    = document.getElementById('settingsNewKey').value.trim();
+  const errEl     = document.getElementById('settingsError');
   errEl.style.display = 'none';
 
   const btn = document.getElementById('btnSettingsSave');
   btn.disabled = true; btn.textContent = 'Salvando...';
 
   try {
-    // Verifica PIN atual descriptografando
-    const stored = localStorage.getItem(STORAGE_KEY);
-    const currentApiKey = stored ? await decryptApiKey(stored, currPin) : null;
+    // Verificar senha do admin
+    const adminUser = USERS.find(x => x.u === loggedUser && x.admin);
+    if (!adminUser) throw new Error('Acesso negado');
 
-    if (stored && !currentApiKey) throw new Error('PIN atual incorreto');
+    const hash = await sha256(adminPass);
+    if (hash !== adminUser.h) throw new Error('Senha incorreta');
 
-    const finalKey = newKey || currentApiKey || sessionKey;
-    const finalPin = newPin.length >= 4 ? newPin : (newPin.length > 0 ? null : currPin);
+    // Determinar a chave final
+    const finalKey = newKey || sessionKey;
+    if (!finalKey) throw new Error('Nenhuma chave disponível');
+    if (newKey && !newKey.startsWith('sk-')) throw new Error('Chave de API inválida');
 
-    if (!finalPin) { errEl.textContent = 'Novo PIN deve ter pelo menos 4 caracteres.'; errEl.style.display='block'; btn.disabled=false; btn.textContent='Salvar'; return; }
-    if (newKey && !newKey.startsWith('sk-')) { errEl.textContent = 'Chave inválida.'; errEl.style.display='block'; btn.disabled=false; btn.textContent='Salvar'; return; }
-
-    const enc = await encryptApiKey(finalKey, finalPin);
+    const enc = await autoEncrypt(finalKey);
     localStorage.setItem(STORAGE_KEY, enc);
     setSessionKey(finalKey);
     document.getElementById('modalSettings').classList.add('hidden');
+    document.getElementById('settingsAdminPass').value = '';
+    document.getElementById('settingsNewKey').value = '';
     toast('✅ Configurações salvas!');
   } catch (err) {
     errEl.textContent = err.message;
@@ -1189,13 +1159,46 @@ async function doSettingsSave() {
   btn.disabled = false; btn.textContent = 'Salvar';
 }
 
+async function doResetKey() {
+  const adminPass = document.getElementById('settingsAdminPass').value;
+  const errEl     = document.getElementById('settingsError');
+  errEl.style.display = 'none';
+
+  if (!adminPass) {
+    errEl.textContent = 'Preencha a senha para confirmar a redefinição.';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  const adminUser = USERS.find(x => x.u === loggedUser && x.admin);
+  if (!adminUser) { errEl.textContent = 'Acesso negado'; errEl.style.display = 'block'; return; }
+
+  const hash = await sha256(adminPass);
+  if (hash !== adminUser.h) {
+    errEl.textContent = 'Senha incorreta';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  if (!confirm('Remover a chave API salva? Será necessário configurar novamente.')) return;
+
+  localStorage.removeItem(STORAGE_KEY);
+  sessionKey = null;
+  const b = document.getElementById('lockBadge');
+  b.textContent = '🔒 Sem chave';
+  b.className = 'lock-badge locked';
+  document.getElementById('modalSettings').classList.add('hidden');
+  show_modal('modalSetup');
+  toast('🗑️ Chave removida. Configure novamente.');
+}
+
 /* ── Dropzone ───────────────────────────────────────────── */
 function setupDropzone() {
   const dz = document.getElementById('dropzone');
   const fi = document.getElementById('fileInput');
 
   dz.addEventListener('dragover',  e => { e.preventDefault(); dz.classList.add('drag-over'); });
-  dz.addEventListener('dragleave', ()  => dz.classList.remove('drag-over'));
+  dz.addEventListener('dragleave', () => dz.classList.remove('drag-over'));
   dz.addEventListener('drop', e => {
     e.preventDefault();
     dz.classList.remove('drag-over');
@@ -1206,7 +1209,7 @@ function setupDropzone() {
 
 function setFile(file) {
   const ok = file.type === 'application/pdf' || file.name.endsWith('.pdf') || file.name.endsWith('.txt');
-  if (!ok)             { toast('⚠️ Use PDF ou TXT'); return; }
+  if (!ok)                           { toast('⚠️ Use PDF ou TXT'); return; }
   if (file.size > 30 * 1024 * 1024) { toast('⚠️ Arquivo muito grande (máx. 30 MB)'); return; }
 
   currentFile = file;
@@ -1232,14 +1235,14 @@ function syncBtn() {
 
 function fmtBytes(b) {
   if (b < 1024)       return b + ' B';
-  if (b < 1024*1024)  return (b/1024).toFixed(1) + ' KB';
-  return (b/(1024*1024)).toFixed(1) + ' MB';
+  if (b < 1024 * 1024) return (b / 1024).toFixed(1) + ' KB';
+  return (b / (1024 * 1024)).toFixed(1) + ' MB';
 }
 
 /* ── Analysis ───────────────────────────────────────────── */
 async function runAnalysis() {
   const key = sessionKey;
-  if (!key) { show_modal('modalUnlock'); return; }
+  if (!key) { toast('⚠️ Sessão sem chave API. Contate o administrador.'); return; }
 
   const isoDate = document.getElementById('dataCrime').value;
   const [y, m, d] = isoDate.split('-');
@@ -1251,9 +1254,9 @@ async function runAnalysis() {
     let content;
 
     if (currentFile.type === 'application/pdf' || currentFile.name.endsWith('.pdf')) {
-      const b64 = await toBase64(currentFile);
+      const b64data = await toBase64(currentFile);
       content = [
-        { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: b64 } },
+        { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: b64data } },
         { type: 'text', text: `Data do fato do crime atual: ${date}` }
       ];
     } else {
@@ -1336,7 +1339,7 @@ async function stream(apiKey, content) {
 
 /* ── View helpers ───────────────────────────────────────── */
 function show(id) {
-  ['viewForm','viewLoading','viewResult'].forEach(v =>
+  ['viewForm', 'viewLoading', 'viewResult'].forEach(v =>
     document.getElementById(v).classList.toggle('hidden', v !== id));
 }
 
